@@ -18,6 +18,7 @@
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
+    "start": "electron .",
     "test": "test"
   },
   "devDependencies": {
