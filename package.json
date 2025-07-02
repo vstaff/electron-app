@@ -1,0 +1,26 @@
+{
+  "name": "electron-app",
+  "version": "1.0.0",
+  "description": "Курсовая работа",
+  "keywords": [
+    "coursesuch"
+  ],
+  "homepage": "https://github.com/vstaff/coursesuch#readme",
+  "bugs": {
+    "url": "https://github.com/vstaff/coursesuch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vstaff/coursesuch.git"
+  },
+  "license": "ISC",
+  "author": "Кон Владислав",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "electron": "^37.1.0"
+  }
+}
