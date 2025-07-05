@@ -36,6 +36,11 @@ import {
 // dsa
 import { HashTable, Key, Value } from "./dsa/HashTable";
 
+import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
 export default function App() {
   // <catalogs_data>
   const [studentsRawData, setStudentsRawData] = useState<string[]>([]);
@@ -177,7 +182,6 @@ export default function App() {
                   />
 
                   <TextField
-                    // autoFocus
                     required
                     margin="dense"
                     id="student-class-number"
@@ -186,35 +190,107 @@ export default function App() {
                     type="number"
                     fullWidth
                     variant="standard"
+                    inputProps={{
+                      min: 1,
+                      max: 11,
+                      step: 1,
+                    }}
                   />
 
                   <FormLabel id="student-class-letter-label">
-                    Параллель
+                    Параллель*
                   </FormLabel>
                   <Select
+                    required
                     labelId="student-class-letter-label"
+                    name="student-class-letter"
                     id="student-class-letter"
                     label="Параллель"
                   >
-                    <MenuItem value={"А"}>А</MenuItem>
-                    <MenuItem value={"Б"}>Б</MenuItem>
-                    <MenuItem value={"В"}>В</MenuItem>
-                    <MenuItem value={"Г"}>Г</MenuItem>
+                    <MenuItem value={"A"}>А</MenuItem>
+                    <MenuItem value={"B"}>Б</MenuItem>
+                    <MenuItem value={"V"}>В</MenuItem>
+                    <MenuItem value={"G"}>Г</MenuItem>
                   </Select>
+
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DemoContainer components={["DatePicker"]}>
+                      <DatePicker
+                        name="student-birth-date"
+                        label="Дата рождения"
+                        slotProps={{
+                          textField: {
+                            required: true,
+                            fullWidth: true,
+                          },
+                        }}
+                      />
+                    </DemoContainer>
+                  </LocalizationProvider>
                 </>
               ) : (
-                <TextField
-                  autoFocus
-                  required
-                  margin="dense"
-                  id="name"
-                  name="email"
-                  label="Email Address"
-                  type="email"
-                  fullWidth
-                  variant="standard"
-                />
+                <>
+                  <TextField
+                    // autoFocus
+                    required
+                    margin="dense"
+                    id="grade-student-name"
+                    name="grade-student-name"
+                    label="ФИО Студента"
+                    type="text"
+                    fullWidth
+                    variant="standard"
+                  />
+
+                  <TextField
+                    // autoFocus
+                    required
+                    margin="dense"
+                    id="grade-subject"
+                    name="grade-subject"
+                    label="Предмет"
+                    type="text"
+                    fullWidth
+                    variant="standard"
+                  />
+
+                  <TextField
+                    required
+                    margin="dense"
+                    id="grade-grade"
+                    name="grade-grade"
+                    label="Оценка"
+                    type="number"
+                    fullWidth
+                    variant="standard"
+                    inputProps={{
+                      min: 2,
+                      max: 5,
+                      step: 1,
+                    }}
+                  />
+
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DemoContainer components={["DatePicker"]}>
+                      <DatePicker
+                        name="grade-date"
+                        label="Дата оценки"
+                        slotProps={{
+                          textField: {
+                            required: true,
+                            fullWidth: true,
+                          },
+                        }}
+                      />
+                    </DemoContainer>
+                  </LocalizationProvider>
+                </>
               )}
+
+              <DialogActions>
+                <Button onClick={handleClose}>Отмена</Button>
+                <Button type="submit">Подтвердить</Button>
+              </DialogActions>
             </FormControl>
           </DialogContent>
         </Dialog>
