@@ -8,21 +8,65 @@ import { useState } from "react";
 
 import { FileWithPath } from "react-dropzone/.";
 
-// components
+// my components
 import MyDND from "./components/MyDND/MyDND";
 import MyTable from "./components/MyTable/MyTable";
+
+// deps components
+import AddIcon from "@mui/icons-material/Add";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Fab,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  InputLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  TextField,
+} from "@mui/material";
 
 // dsa
 import { HashTable, Key, Value } from "./dsa/HashTable";
 
 export default function App() {
+  // <catalogs_data>
   const [studentsRawData, setStudentsRawData] = useState<string[]>([]);
   const [gradesRawData, setGradesRawData] = useState<string[]>([]);
 
   const [studentsHashTable, setStudentsHashTable] = useState<HashTable>(
     new HashTable(10)
   );
+  // </catalogs_data>
 
+  // <form>
+  const [newRecordType, setNewRecordType] = useState<"student" | "grade">(
+    "student"
+  );
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const handleClickOpen = () => {
+    setIsAddFormOpen(true);
+  };
+  const handleClose = () => {
+    setIsAddFormOpen(false);
+  };
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const formJSON = Object.fromEntries((formData as any).entries());
+    handleClose();
+  };
+
+  // </form>
+
+  // <effects>
   useEffect(() => {
     console.log("from app studentsRawData=", studentsRawData);
     if (studentsRawData.length === 0) return;
@@ -43,7 +87,8 @@ export default function App() {
   useEffect(() => {
     console.log("from app studentsHashTable=");
     studentsHashTable.print();
-  }, [studentsHashTable])
+  }, [studentsHashTable]);
+  // </effects>
   return (
     <>
       <div className="open-sans-regular" id="app">
@@ -68,6 +113,111 @@ export default function App() {
           <h2 className="open-sans-light">Хеш-таблица</h2>
           <MyTable hashTable={studentsHashTable} />
         </section>
+
+        <Fab
+          onClick={handleClickOpen}
+          id="add-record-button"
+          size="small"
+          sx={{
+            color: "teal",
+            position: "sticky",
+            bottom: "10px",
+            marginBottom: "10px",
+            marginLeft: "calc(100% - 60px)",
+            zIndex: 100,
+          }}
+          aria-label="add"
+        >
+          <AddIcon />
+        </Fab>
+
+        <Dialog open={isAddFormOpen} onClose={handleClose}>
+          <DialogTitle>Добавить запись</DialogTitle>
+
+          <DialogContent
+            sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
+            <DialogContentText>
+              Заполните форму чтобы добавить новую запись
+            </DialogContentText>
+            <FormControl component="form" onSubmit={handleSubmit}>
+              <FormLabel id="chose-new-record-type-label">Тип записи</FormLabel>
+              <RadioGroup
+                aria-labelledby="demo-radio-buttons-group-label"
+                defaultValue={newRecordType}
+                name="new-record-type"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setNewRecordType(event.target.value as "student" | "grade")
+                }
+              >
+                <FormControlLabel
+                  value="student"
+                  control={<Radio />}
+                  label="Студент"
+                />
+                <FormControlLabel
+                  value="grade"
+                  control={<Radio />}
+                  label="Оценка"
+                />
+              </RadioGroup>
+
+              {newRecordType === "student" ? (
+                <>
+                  <TextField
+                    // autoFocus
+                    required
+                    margin="dense"
+                    id="student-name"
+                    name="student-name"
+                    label="ФИО Студента"
+                    type="text"
+                    fullWidth
+                    variant="standard"
+                  />
+
+                  <TextField
+                    // autoFocus
+                    required
+                    margin="dense"
+                    id="student-class-number"
+                    name="student-class-number"
+                    label="Класс Студента"
+                    type="number"
+                    fullWidth
+                    variant="standard"
+                  />
+
+                  <FormLabel id="student-class-letter-label">
+                    Параллель
+                  </FormLabel>
+                  <Select
+                    labelId="student-class-letter-label"
+                    id="student-class-letter"
+                    label="Параллель"
+                  >
+                    <MenuItem value={"А"}>А</MenuItem>
+                    <MenuItem value={"Б"}>Б</MenuItem>
+                    <MenuItem value={"В"}>В</MenuItem>
+                    <MenuItem value={"Г"}>Г</MenuItem>
+                  </Select>
+                </>
+              ) : (
+                <TextField
+                  autoFocus
+                  required
+                  margin="dense"
+                  id="name"
+                  name="email"
+                  label="Email Address"
+                  type="email"
+                  fullWidth
+                  variant="standard"
+                />
+              )}
+            </FormControl>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
