@@ -37,6 +37,8 @@ const createWindow = () => {
 
   // загружаем контент для окна из index.html
   win.loadFile("./index.html");
+
+  win.webContents.openDevTools({ mode: "detach", });
 }
 
 // когда приложение будет готово к запуску создаем окно с помощью createWindow()
