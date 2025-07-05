@@ -14,7 +14,20 @@
     font-weight: normal;
     font-style: normal;
     font-size: 1.1rem;
-  }
+}
+
+.open-sans-light {
+    font-family: "Open Sans", Arial, Helvetica, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    /* color: red; */
+    font-style: normal;
+    font-size: 1.1rem;
+}
+
+.main-color {
+    color: gray;
+}
 
 .test {
     color: red;

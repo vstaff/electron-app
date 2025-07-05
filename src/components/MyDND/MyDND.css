@@ -1,17 +1,30 @@
 .my-dnd-container {
     padding: 10px;
-    border: 1px solid lightgray;
+    background-color: rgba(211, 211, 211, 0.308);
+    border: 2px dashed gray;
     
     border-radius: 8px;
-    max-width: 500px;
+    max-width: 350px;
+    height: 100px;
+
+    display: flex;
+    flex-flow: column wrap;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+    /* margin-bottom: 20px; */
 }
 
-div.dropzone {
+/* .my-dnd-container:last-child {
+    margin-bottom: 0px;
+} */
+
+.dropzone {
     font-size: 0.9rem;
     color: gray;
     text-align: center;
 }
 
-div.dropzone > .text {
+div.dropzone .text {
     margin-bottom: 10px;
 }
