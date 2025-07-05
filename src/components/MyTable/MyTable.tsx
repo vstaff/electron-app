@@ -19,6 +19,7 @@ export default function MyTable({ hashTable, }: MyTableProps) {
         <TableHead>
           <TableRow>
             <TableCell align="left">#</TableCell>
+            <TableCell align="left">Исходная строка</TableCell>
             <TableCell align="left">Статус</TableCell>
             <TableCell align="left">Первичный хеш</TableCell>
             <TableCell align="left">Вторичный хеш</TableCell>
@@ -34,6 +35,10 @@ export default function MyTable({ hashTable, }: MyTableProps) {
               <TableRow key={index} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell align="left">
                   {index}
+                </TableCell>
+
+                <TableCell align="left">
+                  {node.originRow ?? "~"}
                 </TableCell>
 
                 <TableCell align="left">

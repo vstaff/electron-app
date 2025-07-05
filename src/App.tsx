@@ -29,11 +29,12 @@ export default function App() {
 
     const newHashTable = new HashTable(Math.ceil(studentsRawData.length * 1.5));
 
+    let i = 0;
     for (const line of studentsRawData) {
       const [name, classCode, birthDate] = line.split(";");
       const key = new Key(name, birthDate);
       const value = new Value(classCode);
-      newHashTable.insert(key, value);
+      newHashTable.insert(key, value, i++);
     }
 
     setStudentsHashTable(newHashTable);
