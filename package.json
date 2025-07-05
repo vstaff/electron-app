@@ -18,10 +18,35 @@
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "test": "test"
+    "build:renderer": "webpack --config webpack.config.js",
+    "watch:renderer": "webpack --config webpack.config.js --watch",
+    "dev": "concurrently \"npm run watch:renderer\" \"electron .\"",
+    "start": "npm run build:renderer && electron .",
+    "test": "test",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "devDependencies": {
-    "electron": "^37.1.0"
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "css-loader": "^7.1.2",
+    "electron": "^37.1.0",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }

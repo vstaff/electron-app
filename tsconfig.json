@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+      "target": "ES5",                   // или ES2015/ESNext
+      "module": "ESNext",
+      "jsx": "react",                    // для .tsx
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "moduleResolution": "node",
+      "allowSyntheticDefaultImports": true
+    },
+    // вместо "files" используем "include":
+    "include": [
+      "src/**/*"
+    ],
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
+  }
+  
