@@ -37,6 +37,7 @@ export default function MyTable({ hashTable, }: MyTableProps) {
         <TableHead>
           <TableRow>
             <TableCell align="left">#</TableCell>
+            <TableCell align="left">Статус</TableCell>
             <TableCell align="left">Первичный хеш</TableCell>
             <TableCell align="left">Вторичный хеш</TableCell>
             <TableCell align="left">ФИО</TableCell>

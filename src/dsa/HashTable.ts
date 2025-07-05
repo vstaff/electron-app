@@ -70,15 +70,27 @@ export class Value {
   }
 }
 
+interface HashNodeConstructor {
+  key?: Key;
+  value?: Value;
+  status?: Status;
+  initialHash?: number;
+  secondaryHash?: number;
+}
+
 class HashNode {
   public key?: Key;
   public value?: Value;
-  public status: Status;
+  public status?: Status;
+  public initialHash?: number;
+  public secondaryHash?: number;
 
-  constructor(key?: Key, value?: Value, status: Status = Status.FREE) {
+  constructor({key, value, initialHash, secondaryHash, status} : HashNodeConstructor) {
     this.key = key;
     this.value = value;
-    this.status = status;
+    this.status = status ?? Status.FREE;
+    this.initialHash = initialHash;
+    this.secondaryHash = secondaryHash;
   }
 }
 
@@ -92,7 +104,7 @@ export class HashTable {
     this.size = initialSize;
     this.k = this.getMinPrime(this.size);
     this.spaceLeft = this.size;
-    this.nodes = Array.from({ length: this.size }, () => new HashNode());
+    this.nodes = Array.from({ length: this.size }, () => new HashNode({}));
   }
 
   getNodes(): readonly HashNode[] {
@@ -127,7 +139,7 @@ export class HashTable {
   }
 
   insert(key: Key, value: Value): boolean {
-    let initialHash = this.getInitialHash(key);
+    const initialHash = this.getInitialHash(key);
     let idx = initialHash;
     let i = 1;
     let firstRemoved: number | null = null;
@@ -141,7 +153,8 @@ export class HashTable {
     }
 
     const insertPos = firstRemoved !== null ? firstRemoved : idx;
-    this.nodes[insertPos] = new HashNode(key, value, Status.OCCUPIED);
+    // this.nodes[insertPos] = new HashNode(key, value, Status.OCCUPIED);
+    this.nodes[insertPos] = new HashNode({ key, value, initialHash, secondaryHash: insertPos, status: Status.OCCUPIED,});
     this.spaceLeft--;
 
     if (this.spaceLeft <= this.size * 0.3) {
@@ -190,7 +203,7 @@ export class HashTable {
     const oldNodes = this.nodes;
     const items: { key: Key; value: Value }[] = [];
     for (const node of oldNodes) {
-      if (node.status === Status.OCCUPIED && node.key && node.value) {
+      if (node.status !== Status.FREE && node.key !== undefined && node.value !== undefined) {
         items.push({ key: node.key, value: node.value });
         if (newSize < oldNodes.length && items.length >= newSize) break;
       }
@@ -199,15 +212,16 @@ export class HashTable {
     this.size = newSize;
     this.k = this.getMinPrime(this.size);
     this.spaceLeft = this.size - items.length;
-    this.nodes = Array.from({ length: this.size }, () => new HashNode());
+    this.nodes = Array.from({ length: this.size }, () => new HashNode({}));
 
     for (const { key, value } of items) {
-      let idx = this.getInitialHash(key);
+      const initialHash = this.getInitialHash(key);
+      let idx = initialHash;
       let i = 1;
       while (this.nodes[idx].status !== Status.FREE) {
         idx = this.getSecondaryHash(this.getInitialHash(key), i++);
       }
-      this.nodes[idx] = new HashNode(key, value, Status.OCCUPIED);
+      this.nodes[idx] = new HashNode({ key, value, initialHash, secondaryHash: idx, status: Status.OCCUPIED,});
     }
   }
 
