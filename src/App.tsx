@@ -1,13 +1,16 @@
 import React from "react"
-import "./styles/global.css";
+import "./styles/global.css"
+import MyDND from "./components/MyDND/MyDND";
 
 export default function App() {
   return (
     <>
       <div id="app">
-        <h1 className="text">Привет из Electron!</h1>
+        <h1 className="open-sans-regular">Привет из Electron!</h1>
         <p>👋</p>
-        <p id="info"></p>
+        
+        <MyDND />
+        <MyDND />
       </div>
     </>
   )

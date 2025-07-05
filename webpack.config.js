@@ -18,6 +18,22 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
+        // CSS Modules: файлы *.module.css
+        test: /\.module\.css$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                // можно задать формат имён, например:
+                localIdentName: '[name]__[local]__[hash:base64:5]',
+              }
+            }
+          }
+        ]
+      },
+      {
         test: /\.css$/,                                 // для CSS
         use: ['style-loader', 'css-loader'],
       },

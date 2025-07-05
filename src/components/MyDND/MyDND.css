@@ -1,0 +1,17 @@
+.my-dnd-container {
+    padding: 10px;
+    border: 1px solid lightgray;
+    
+    border-radius: 8px;
+    max-width: 500px;
+}
+
+div.dropzone {
+    font-size: 0.9rem;
+    color: gray;
+    text-align: center;
+}
+
+div.dropzone > .text {
+    margin-bottom: 10px;
+}
