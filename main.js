@@ -6,6 +6,20 @@ BrowserWindow, which creates and manages app windows.
 const { app, BrowserWindow, ipcMain, } = require("electron");
 const path = require("node:path");
 
+const electronPath = path.join(
+  __dirname,
+  'node_modules',
+  '.bin',
+  process.platform === 'win32' ? 'electron.cmd' : 'electron'
+);
+require('electron-reload')([
+  path.join(__dirname, 'dist'),
+  path.join(__dirname, 'preload.js'),
+  path.join(__dirname, 'main.js'),
+], {
+  electron: electronPath,          // строка — путь к exe/.cmd
+  hardResetMethod: 'exit',         // правильное имя опции
+});
 /**
  * Creates a new browser window with specified dimensions and loads the 'index.html' file.
  */

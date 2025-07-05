@@ -20,8 +20,8 @@
   "scripts": {
     "build:renderer": "webpack --config webpack.config.js",
     "watch:renderer": "webpack --config webpack.config.js --watch",
-    "dev": "concurrently \"npm run watch:renderer\" \"electron .\"",
-    "start": "npm run build:renderer && electron .",
+    "start": "concurrently --kill-others \"npm run watch:renderer\" \"electron .\"",
+    "dev": "npm run watch:renderer && electron .",
     "test": "test",
     "package": "electron-forge package",
     "make": "electron-forge make"
@@ -39,10 +39,13 @@
     "@types/react-dom": "^19.1.6",
     "css-loader": "^7.1.2",
     "electron": "^37.1.0",
+    "electron-reload": "^2.0.0-alpha.1",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.2",
     "webpack": "^5.99.9",
-    "webpack-cli": "^6.0.1"
+    "webpack-cli": "^6.0.1",
+
+    "concurrently": "^8.0.0"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
