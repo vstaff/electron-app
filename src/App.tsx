@@ -1,48 +1,33 @@
 import React, { useEffect } from "react";
+
+// <styles>
 import "./styles/global.css";
-
 import "./styles/App.css";
+// </styles>
 
-// hooks
+// <hooks>
 import { useState } from "react";
+// </hooks>
 
-import { FileWithPath } from "react-dropzone/.";
-import  { MONTHS, } from "./util";
-
-// my components
+// <my_components>
 import MyDND from "./components/MyDND/MyDND";
 import MyTable from "./components/MyTable/MyTable";
-import MyContextMenuStrip from "./components/MyContextMenuStrip/MyContextMenuStrip";
+import AddRecordForm from "./components/AddRecordForm/AddRecordForm";
+// </my_components>
 
-// deps components
+// <mui>
 import AddIcon from "@mui/icons-material/Add";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Fab,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  InputLabel,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  Select,
-  TextField,
-} from "@mui/material";
+import { Fab } from "@mui/material";
+// </mui>
 
-// dsa
-import { HashTable, Key, Value } from "./dsa/HashTable";
+// <dsa>
+import HashTable from "./dsa/hash_table/HashTable";
+import Key from "./dsa/hash_table/Key";
+import Value from "./dsa/hash_table/Value";
+// </dsa>
 
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { correctDate, validateStudentsFile } from "./util";
+// util
+import { convertHashTableToRaw, correctDate, FormDataJSON, INITIAL_HASH_SIZE, validateStudentsFile } from "./util";
 
 export default function App() {
   // <catalogs_data>
@@ -50,7 +35,7 @@ export default function App() {
   const [gradesRawData, setGradesRawData] = useState<string[]>([]);
 
   const [studentsHashTable, setStudentsHashTable] = useState<HashTable>(
-    new HashTable(10)
+    new HashTable(INITIAL_HASH_SIZE)
   );
   // </catalogs_data>
 
@@ -68,23 +53,9 @@ export default function App() {
   const handleNewStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    /* 
-    new-record-type: "student"
-    student-birth-date: "12/12/2004"
-    student-class-letter: "B"
-    student-class-number: "11"
-    student-name: "asdf"
-    */
-    interface FormDataJSON {
-      "new-record-type": string;
-      "student-birth-date": string;
-      "student-class-letter": string;
-      "student-class-number": string;
-      "student-name": string;
-    }
     const raw = Object.fromEntries((formData as any).entries());
     const formJSON = raw as FormDataJSON;
-    
+
     try {
       const key = new Key(
         formJSON["student-name"],
@@ -108,7 +79,7 @@ export default function App() {
     console.log(formJSON);
     handleClose();
   };
-
+  const handleNewGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
   // </form>
 
   // <dnd>
@@ -123,7 +94,7 @@ export default function App() {
     console.log("from app studentsRawData=", studentsRawData);
     if (studentsRawData.length === 0) return;
 
-    const newHashTable = new HashTable(Math.ceil(studentsRawData.length));
+    const newHashTable = new HashTable(studentsRawData.length);
     let wasBreak = false;
     for (const line of studentsRawData) {
       const [name, classCode, birthDate] = line.split(";");
@@ -196,28 +167,43 @@ export default function App() {
         <section className="app-section" id="table-section">
           <h2 className="open-sans-light">Хеш-таблица</h2>
           <MyTable
-            callbacks={[
-              {
-                name: "Добавить",
-                callback: () => setIsAddFormOpen(true),
-              },
-              {
-                name: "Экспортировать",
-                callback: () => {},
-              },
-              {
-                name: "Импортировать",
-                callback: () => {},
-              },
-
-              {
-                name: "Изменить",
-                callback: () => {
-                  return;
-                },
-              },
+            tableHead={[
+              "Статус",
+              "Первичный хеш",
+              "Вторичный хеш",
+              "ФИО",
+              "Класс",
+              "Дата Рождения",
             ]}
-            hashTable={studentsHashTable}
+            tableContent={convertHashTableToRaw(studentsHashTable)}
+            callbacks={{
+              tableHead: [
+                {
+                  name: "Добавить",
+                  callback: () => setIsAddFormOpen(true),
+                },
+                {
+                  name: "Экспортировать",
+                  callback: () => console.log("экспорт студентов"),
+                },
+                {
+                  name: "Импортировать",
+                  callback: () => console.log("импорт студентов"),
+                },
+              ],
+
+              tableContent: [
+                {
+                  name: "Редактировать",
+                  callback: () => console.log("Редактировать"),
+                },
+                {
+                  name: "Удалить",
+                  callback: () => console.log("Удалить"),
+                },
+              ]
+            }}
+            
           />
         </section>
 
@@ -238,165 +224,14 @@ export default function App() {
           <AddIcon />
         </Fab>
 
-        <Dialog open={isAddFormOpen} onClose={handleClose}>
-          <DialogTitle>Добавить запись</DialogTitle>
-
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
-          >
-            <DialogContentText>
-              Заполните форму чтобы добавить новую запись
-            </DialogContentText>
-            <form onSubmit={handleNewStudentSubmit}>
-              <FormLabel id="chose-new-record-type-label">Тип записи</FormLabel>
-              <RadioGroup
-                aria-labelledby="demo-radio-buttons-group-label"
-                defaultValue={newRecordType}
-                name="new-record-type"
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setNewRecordType(event.target.value as "student" | "grade")
-                }
-              >
-                <FormControlLabel
-                  value="student"
-                  control={<Radio />}
-                  label="Студент"
-                />
-                <FormControlLabel
-                  value="grade"
-                  control={<Radio />}
-                  label="Оценка"
-                />
-              </RadioGroup>
-
-              {newRecordType === "student" ? (
-                <>
-                  <TextField
-                    // autoFocus
-                    required
-                    margin="dense"
-                    id="student-name"
-                    name="student-name"
-                    label="ФИО Студента"
-                    type="text"
-                    fullWidth
-                    variant="standard"
-                  />
-
-                  <TextField
-                    required
-                    margin="dense"
-                    id="student-class-number"
-                    name="student-class-number"
-                    label="Класс Студента"
-                    type="number"
-                    fullWidth
-                    variant="standard"
-                    inputProps={{
-                      min: 1,
-                      max: 11,
-                      step: 1,
-                    }}
-                  />
-
-                  <FormLabel id="student-class-letter-label">
-                    Параллель*
-                  </FormLabel>
-                  <Select
-                    required
-                    labelId="student-class-letter-label"
-                    name="student-class-letter"
-                    id="student-class-letter"
-                    label="Параллель"
-                    // value={"А"}
-                  >
-                    <MenuItem value={"А"}>А</MenuItem>
-                    <MenuItem value={"Б"}>Б</MenuItem>
-                    <MenuItem value={"В"}>В</MenuItem>
-                    <MenuItem value={"Г"}>Г</MenuItem>
-                  </Select>
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DemoContainer components={["DatePicker"]}>
-                      <DatePicker
-                        name="student-birth-date"
-                        label="Дата рождения"
-                        slotProps={{
-                          textField: {
-                            required: true,
-                            fullWidth: true,
-                          },
-                        }}
-                      />
-                    </DemoContainer>
-                  </LocalizationProvider>
-                </>
-              ) : (
-                <>
-                  <TextField
-                    // autoFocus
-                    required
-                    margin="dense"
-                    id="grade-student-name"
-                    name="grade-student-name"
-                    label="ФИО Студента"
-                    type="text"
-                    fullWidth
-                    variant="standard"
-                  />
-
-                  <TextField
-                    // autoFocus
-                    required
-                    margin="dense"
-                    id="grade-subject"
-                    name="grade-subject"
-                    label="Предмет"
-                    type="text"
-                    fullWidth
-                    variant="standard"
-                  />
-
-                  <TextField
-                    required
-                    margin="dense"
-                    id="grade-grade"
-                    name="grade-grade"
-                    label="Оценка"
-                    type="number"
-                    fullWidth
-                    variant="standard"
-                    inputProps={{
-                      min: 2,
-                      max: 5,
-                      step: 1,
-                    }}
-                  />
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DemoContainer components={["DatePicker"]}>
-                      <DatePicker
-                        name="grade-date"
-                        label="Дата оценки"
-                        slotProps={{
-                          textField: {
-                            required: true,
-                            fullWidth: true,
-                          },
-                        }}
-                      />
-                    </DemoContainer>
-                  </LocalizationProvider>
-                </>
-              )}
-
-              <DialogActions>
-                <Button onClick={handleClose}>Отмена</Button>
-                <Button type="submit">Подтвердить</Button>
-              </DialogActions>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <AddRecordForm
+          isAddFormOpen={isAddFormOpen}
+          handleClose={handleClose}
+          handleNewStudentSubmit={handleNewStudentSubmit}
+          handleNewGradeSubmit={handleNewGradeSubmit}
+          setNewRecordType={setNewRecordType}
+          newRecordType={newRecordType}
+        />
       </div>
     </>
   );

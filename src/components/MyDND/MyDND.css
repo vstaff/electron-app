@@ -1,7 +1,7 @@
 .my-dnd-container {
     padding: 10px;
     background-color: rgba(211, 211, 211, 0.308);
-    border: 2px dashed gray;
+    /* border: 2px solid gray; */
     
     border-radius: 8px;
     max-width: 350px;
