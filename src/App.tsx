@@ -27,7 +27,7 @@ import Value from "./dsa/hash_table/Value";
 // </dsa>
 
 // util
-import { convertHashTableToRaw, correctDate, FormDataJSON, INITIAL_HASH_SIZE, validateStudentsFile } from "./util";
+import { makeHTRaw, correctDate, FormDataJSON, INITIAL_HASH_SIZE, validateStudentsFile } from "./util";
 
 export default function App() {
   // <catalogs_data>
@@ -56,6 +56,8 @@ export default function App() {
     const raw = Object.fromEntries((formData as any).entries());
     const formJSON = raw as FormDataJSON;
 
+    console.log(formJSON);
+    console.log(correctDate(formJSON["student-birth-date"]));
     try {
       const key = new Key(
         formJSON["student-name"],
@@ -167,6 +169,7 @@ export default function App() {
         <section className="app-section" id="table-section">
           <h2 className="open-sans-light">Хеш-таблица</h2>
           <MyTable
+            tableFor="students"
             tableHead={[
               "Статус",
               "Первичный хеш",
@@ -175,9 +178,30 @@ export default function App() {
               "Класс",
               "Дата Рождения",
             ]}
-            tableContent={convertHashTableToRaw(studentsHashTable)}
-            callbacks={{
-              tableHead: [
+            tableContent={makeHTRaw(studentsHashTable, [
+              {
+                name: "Редактировать",
+                callback: ({ name, birthDate, from, } : { name: string; birthDate: string; from: string; }) => {
+                  console.log(`Редактировать ${name} ${birthDate} из справочника ${from}`);
+                  const index = studentsHashTable.search(new Key(name, birthDate));
+                  console.log(`нужно отредачить элемент ${name} ${birthDate} в таблице ${from} на ${index}`)
+
+                  setStudentsHashTable(prevStudentsHashTable => {
+                    const newHashTable = prevStudentsHashTable.clone();
+                    newHashTable.replace(index ?? 0);
+                    return newHashTable;
+                  })
+                },
+              },
+              {
+                name: "Удалить",
+                callback: ({ name, birthDate, from, } : { name: string, birthDate: string, from: string, }) => {
+                  console.log(`Удалить ${name} ${birthDate} из справочника ${from}`);
+                }
+              }
+            ])}
+            tableHeadCallbacks={
+              [
                 {
                   name: "Добавить",
                   callback: () => setIsAddFormOpen(true),
@@ -190,20 +214,8 @@ export default function App() {
                   name: "Импортировать",
                   callback: () => console.log("импорт студентов"),
                 },
-              ],
-
-              tableContent: [
-                {
-                  name: "Редактировать",
-                  callback: () => console.log("Редактировать"),
-                },
-                {
-                  name: "Удалить",
-                  callback: () => console.log("Удалить"),
-                },
               ]
-            }}
-            
+            }
           />
         </section>
 

@@ -8,13 +8,14 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import "./MyTable.css";
 import MyContextMenuStrip from "../MyContextMenuStrip/MyContextMenuStrip";
-import { MyTableProps } from "../../util";
+import { MyTableProps, table_row } from "../../util";
 import HashNode from "../../dsa/hash_table/HashNode";
 
 export default function MyTable({
+  tableFor,
   tableHead,
+  tableHeadCallbacks,
   tableContent,
-  callbacks,
 }: MyTableProps) {
   return (
     <TableContainer component={Paper}>
@@ -36,20 +37,21 @@ export default function MyTable({
               </TableRow>
             </TableHead>
           }
-          callbacks={callbacks.tableHead}
+          callbacks={tableHeadCallbacks}
         />
 
         <TableBody>
           {tableContent?.map((content, cidx) => (
             <MyContextMenuStrip
-              callbacks={callbacks.tableContent}
+              // callbacks={callbacks.tableContent}
+              callbacks={content.callbacks}
               key={cidx}
               target={
                 <TableRow
                   className="table-row"
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                 >
-                  {content.map((item, idx) => (
+                  {content.content.map((item, idx) => (
                     <TableCell key={idx} align="left">
                       {item}
                     </TableCell>

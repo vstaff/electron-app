@@ -44,13 +44,16 @@ export interface MyContextMenuStripProps {
   target: ReactElement<React.HTMLAttributes<HTMLElement>>;
 }
 
+export interface table_row {
+  content: string[],
+  callbacks: Callback[],
+}
+
 export interface MyTableProps {
+  tableFor: "students" | "grades",
   tableHead: string[];
-  tableContent?: string[][];
-  callbacks: {
-    tableHead: Callback[];
-    tableContent: Callback[];
-  }
+  tableContent?: table_row[];
+  tableHeadCallbacks: Callback[],
 }
 
 export interface AddRecordFormProps {
@@ -106,14 +109,30 @@ export interface FormDataJSON {
   "student-name": string;
 }
 
-export const convertHashTableToRaw = (hashTable: HashTable): string[][] => {
-  const result: string[][] = [];
+// преобразовать хеш-таблицу для отображения в обычной таблице 
+export const makeHTRaw = (hashTable: HashTable, callbacks: Callback[]): table_row[] => {
+  const result: table_row[] = [];
 
   hashTable.getNodes().forEach((node, idx) => {
     if (node !== undefined && node.key !== undefined && node.value !== undefined && node.status !== undefined && node.initialHash !== undefined && node.secondaryHash !== undefined) {
-      result.push([idx.toString(), node.status.toString(), node.initialHash?.toString(), node.secondaryHash?.toString(), node.key.name, node.value.classCode, node.key.birthDate])
+      result.push(
+        {
+          content: [idx.toString(), node.status.toString(), node.initialHash.toString(), node.secondaryHash.toString(), node.key.name, node.value.classCode, node.key.birthDate],
+          callbacks: callbacks.map(cb => ({
+            name: cb.name,
+            callback: () => cb.callback(node.key)
+          })),
+          // callbacks: callbacks.map(callback => ({ name: callback.name, callback: callback.callback, } as Callback))
+        }
+      )
     } else {
-      result.push([idx.toString(), ...Array(6).fill(BLANK_IN_TABLE)])
+      result.push({
+        content: [idx.toString(), ...Array(6).fill(BLANK_IN_TABLE)],
+        callbacks: [{
+          name: "empty",
+          callback: () => alert("empty"),
+        }],
+      })
     }
   });
 

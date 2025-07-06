@@ -108,6 +108,7 @@ export default function AddRecordForm({
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DemoContainer components={["DatePicker"]}>
                   <DatePicker
+                    format="DD/MM/YYYY"
                     name="student-birth-date"
                     label="Дата рождения"
                     slotProps={{

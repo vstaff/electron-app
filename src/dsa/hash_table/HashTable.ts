@@ -157,4 +157,26 @@ export default class HashTable {
     });
     return count;
   }
+
+  clone(): HashTable {
+    const copy = new HashTable(this.size);
+    this.nodes.forEach((node, idx) => {
+      copy.nodes[idx] = node;
+    });
+    return copy;
+  }
+
+  replace(idx: number) {
+    if (this.nodes[idx].status === Status.FREE) {
+      alert("empty");
+      return;
+    }
+
+    this.nodes[idx] = new HashNode({
+      ...this.nodes[idx],
+      key: new Key("Хуесос Пидорас Гандодн", "11 сен 2001"),
+      value: new Value("11Б"),
+    })
+    console.log("произошла замена!!!!")
+  }
 }
