@@ -7,10 +7,12 @@ import "./styles/App.css";
 import { useState } from "react";
 
 import { FileWithPath } from "react-dropzone/.";
+import  { MONTHS, } from "./util";
 
 // my components
 import MyDND from "./components/MyDND/MyDND";
 import MyTable from "./components/MyTable/MyTable";
+import MyContextMenuStrip from "./components/MyContextMenuStrip/MyContextMenuStrip";
 
 // deps components
 import AddIcon from "@mui/icons-material/Add";
@@ -40,6 +42,7 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { correctDate, validateStudentsFile } from "./util";
 
 export default function App() {
   // <catalogs_data>
@@ -62,37 +65,99 @@ export default function App() {
   const handleClose = () => {
     setIsAddFormOpen(false);
   };
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleNewStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const formJSON = Object.fromEntries((formData as any).entries());
+    /* 
+    new-record-type: "student"
+    student-birth-date: "12/12/2004"
+    student-class-letter: "B"
+    student-class-number: "11"
+    student-name: "asdf"
+    */
+    interface FormDataJSON {
+      "new-record-type": string;
+      "student-birth-date": string;
+      "student-class-letter": string;
+      "student-class-number": string;
+      "student-name": string;
+    }
+    const raw = Object.fromEntries((formData as any).entries());
+    const formJSON = raw as FormDataJSON;
+    
+    try {
+      const key = new Key(
+        formJSON["student-name"],
+        correctDate(formJSON["student-birth-date"])
+      );
+      const value = new Value(
+        `${formJSON["student-class-number"].replace('"', "")}${
+          formJSON["student-class-letter"]
+        }`
+      );
+
+      setStudentsHashTable((prevStudentsHashTable) => {
+        prevStudentsHashTable.insert(key, value);
+        return prevStudentsHashTable;
+      });
+    } catch (err) {
+      alert(`Не получилось добавить запись для Справочника Студенты`);
+      return;
+    }
+
+    console.log(formJSON);
     handleClose();
   };
 
   // </form>
+
+  // <dnd>
+  const [studentsDNDContentRejected, setStudentsDNDContentRejected] =
+    useState(false);
+  const [gradesDNDContentRejected, setGradesDNDContentRejected] =
+    useState(false);
+  // </dnd>
 
   // <effects>
   useEffect(() => {
     console.log("from app studentsRawData=", studentsRawData);
     if (studentsRawData.length === 0) return;
 
-    const newHashTable = new HashTable(Math.ceil(studentsRawData.length * 1.5));
-
-    let i = 0;
+    const newHashTable = new HashTable(Math.ceil(studentsRawData.length));
+    let wasBreak = false;
     for (const line of studentsRawData) {
       const [name, classCode, birthDate] = line.split(";");
-      const key = new Key(name, birthDate);
-      const value = new Value(classCode);
-      newHashTable.insert(key, value, i++);
+      try {
+        const key = new Key(name, birthDate);
+        const value = new Value(classCode);
+        newHashTable.insert(key, value);
+      } catch (err) {
+        alert("Не получилось загрузить данные из файла");
+        setStudentsDNDContentRejected(true);
+        wasBreak = true;
+        break;
+      }
     }
 
-    setStudentsHashTable(newHashTable);
+    setStudentsHashTable(wasBreak ? new HashTable(10) : newHashTable);
   }, [studentsRawData]);
 
   useEffect(() => {
     console.log("from app studentsHashTable=");
     studentsHashTable.print();
   }, [studentsHashTable]);
+
+  useEffect(() => {
+    if (studentsDNDContentRejected) {
+      setStudentsHashTable(new HashTable(10));
+    }
+  }, [studentsDNDContentRejected]);
+
+  useEffect(() => {
+    if (gradesDNDContentRejected) {
+      // TODO: че делать когда файл с оценками некорректный
+    }
+  });
   // </effects>
   return (
     <>
@@ -105,18 +170,55 @@ export default function App() {
             id="load-file-students-container"
           >
             <h3 className="open-sans-light">Справочник студентов</h3>
-            <MyDND name="Ученики" setRawData={setStudentsRawData} />
+            <MyDND
+              name="Ученики"
+              setRawData={setStudentsRawData}
+              alertMessage="Для справочника Студенты каждая строка входного файла должна содержать: ФИО;Класс;Дата рождения"
+              validateFile={validateStudentsFile}
+              contentRejected={studentsDNDContentRejected}
+              setContentRejected={setStudentsDNDContentRejected}
+            />
           </div>
 
           <div className="load-file-container" id="load-file-grades-container">
             <h3 className="open-sans-light">Справочник оценок</h3>
-            <MyDND name="Оценки" setRawData={setGradesRawData} />
+            <MyDND
+              name="Оценки"
+              setRawData={setGradesRawData}
+              alertMessage="Для справочника Оценки каждая строка входного файла должна содержать: ФИО;Предмет;Оценка;Дата"
+              validateFile={(text: string) => true}
+              contentRejected={gradesDNDContentRejected}
+              setContentRejected={setGradesDNDContentRejected}
+            />
           </div>
         </section>
 
         <section className="app-section" id="table-section">
           <h2 className="open-sans-light">Хеш-таблица</h2>
-          <MyTable hashTable={studentsHashTable} />
+          <MyTable
+            callbacks={[
+              {
+                name: "Добавить",
+                callback: () => setIsAddFormOpen(true),
+              },
+              {
+                name: "Экспортировать",
+                callback: () => {},
+              },
+              {
+                name: "Импортировать",
+                callback: () => {},
+              },
+
+              {
+                name: "Изменить",
+                callback: () => {
+                  return;
+                },
+              },
+            ]}
+            hashTable={studentsHashTable}
+          />
         </section>
 
         <Fab
@@ -145,7 +247,7 @@ export default function App() {
             <DialogContentText>
               Заполните форму чтобы добавить новую запись
             </DialogContentText>
-            <FormControl component="form" onSubmit={handleSubmit}>
+            <form onSubmit={handleNewStudentSubmit}>
               <FormLabel id="chose-new-record-type-label">Тип записи</FormLabel>
               <RadioGroup
                 aria-labelledby="demo-radio-buttons-group-label"
@@ -206,11 +308,12 @@ export default function App() {
                     name="student-class-letter"
                     id="student-class-letter"
                     label="Параллель"
+                    // value={"А"}
                   >
-                    <MenuItem value={"A"}>А</MenuItem>
-                    <MenuItem value={"B"}>Б</MenuItem>
-                    <MenuItem value={"V"}>В</MenuItem>
-                    <MenuItem value={"G"}>Г</MenuItem>
+                    <MenuItem value={"А"}>А</MenuItem>
+                    <MenuItem value={"Б"}>Б</MenuItem>
+                    <MenuItem value={"В"}>В</MenuItem>
+                    <MenuItem value={"Г"}>Г</MenuItem>
                   </Select>
 
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -291,7 +394,7 @@ export default function App() {
                 <Button onClick={handleClose}>Отмена</Button>
                 <Button type="submit">Подтвердить</Button>
               </DialogActions>
-            </FormControl>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

@@ -1,4 +1,4 @@
-  import React, { useCallback } from "react";
+  import React, { useCallback, useState } from "react";
   import { FileWithPath, useDropzone } from "react-dropzone";
   // styles
   import "./MyDND.css";
@@ -9,10 +9,15 @@
   interface MyDNDProps {
     name: string,
     setRawData: React.Dispatch<React.SetStateAction<string[]>>;
+    alertMessage: string,
+    validateFile: (text: string) => boolean,
+    contentRejected: boolean,
+    setContentRejected: React.Dispatch<React.SetStateAction<boolean>>
   }
 
-  export default function MyDND({ name, setRawData, }: MyDNDProps) {
-    const onDropAccepted = useCallback((acceptedFiles: readonly FileWithPath[]) => {
+  export default function MyDND({ name, setRawData, alertMessage, validateFile, contentRejected, setContentRejected, }: MyDNDProps) {
+    // const [contentRejected, setContentRejected] = useState(false);
+    const onDrop = useCallback((acceptedFiles: readonly FileWithPath[]) => {
       if (acceptedFiles.length === 0) return; // по идее этого не должно случиться, но на всякий случай
       const file = acceptedFiles[0];
 
@@ -20,27 +25,43 @@
           .text()
           .then((text) => {
             // разбиваем по переводу строки (поддерживает Windows/Mac/Linux)
-            const arr = text.trim().split(/\r?\n/);
-            arr.forEach(line => {
-              if (line === "") return;
-              if (line.split(";").length != 3) {
-                throw new Error("Для справочника Студенты каждая строка входного файла должна содержать: ФИО;Класс;Дата рождения")
-              }
-            })
-
-            setRawData(arr);
+            if (!validateFile(text)) {
+              alert(alertMessage);
+              setContentRejected(true);
+            } else {
+              setContentRejected(false);
+              setRawData(text.trim().split(/\r?\n/));
+            }
+            // const arr = text.trim().split(/\r?\n/);
+            // for (const line of arr) {
+            //   if (line === "") return;
+            //   if (line.split(";").length != 3) {
+            //     alert(alertMessage);
+            //     setContentRejected(true);
+            //     break;
+            //   } else {
+            //     setContentRejected(false);
+            //     setRawData(arr);
+            //   }
+            // }
           })
           .catch((err) => {
             console.error("Ошибка чтения файла:", err);
           });
     }, []);
 
+    const onDragEnter = () => {
+      setContentRejected(false);
+    }
+
     const {
       acceptedFiles,
       getRootProps,
       getInputProps,
+      isDragReject,
     } = useDropzone({
-      onDropAccepted,
+      onDrop,
+      onDragEnter,
       maxFiles: 1,
       accept: {
         "text/plain": [".txt"],
@@ -50,7 +71,7 @@
     return (
       <section {...getRootProps({ className: "dropzone" })} className="dropzone my-dnd-container open-sans-regular">
         {(() => {
-            if (acceptedFiles.length == 0) {
+            if (acceptedFiles.length == 0 || contentRejected) {
               return (
                 <>
                   <AttachFileIcon />
@@ -61,7 +82,6 @@
             } else {
               return (
                 <>
-                  
                   <DescriptionIcon />
                   <input {...getInputProps()} />
                   <p className="text">{acceptedFiles[0].name}</p>

@@ -1,0 +1,9 @@
+.table-row {
+    transition: all 0.1s ease 0s;
+}
+
+.table-row:hover {
+    /* transform:scale(1.0045); */
+    cursor: pointer;
+    background-color: rgba(211, 211, 211, 0.144);
+}
