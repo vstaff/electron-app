@@ -128,10 +128,7 @@ export const makeHTRaw = (hashTable: HashTable, callbacks: Callback[]): table_ro
     } else {
       result.push({
         content: [idx.toString(), ...Array(6).fill(BLANK_IN_TABLE)],
-        callbacks: [{
-          name: "empty",
-          callback: () => alert("empty"),
-        }],
+        callbacks: [],
       })
     }
   });

@@ -180,23 +180,14 @@ export default function App() {
             ]}
             tableContent={makeHTRaw(studentsHashTable, [
               {
-                name: "Редактировать",
-                callback: ({ name, birthDate, from, } : { name: string; birthDate: string; from: string; }) => {
-                  console.log(`Редактировать ${name} ${birthDate} из справочника ${from}`);
-                  const index = studentsHashTable.search(new Key(name, birthDate));
-                  console.log(`нужно отредачить элемент ${name} ${birthDate} в таблице ${from} на ${index}`)
-
-                  setStudentsHashTable(prevStudentsHashTable => {
-                    const newHashTable = prevStudentsHashTable.clone();
-                    newHashTable.replace(index ?? 0);
-                    return newHashTable;
-                  })
-                },
-              },
-              {
                 name: "Удалить",
                 callback: ({ name, birthDate, from, } : { name: string, birthDate: string, from: string, }) => {
                   console.log(`Удалить ${name} ${birthDate} из справочника ${from}`);
+                  setStudentsHashTable(prevStudentsHashTable => {
+                    const newHashTable = prevStudentsHashTable.clone();
+                    newHashTable.remove(new Key(name, birthDate));
+                    return newHashTable;
+                  })
                 }
               }
             ])}

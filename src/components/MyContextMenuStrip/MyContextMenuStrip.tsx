@@ -1,18 +1,16 @@
-import React, {
-  cloneElement,
-  ReactElement,
-  MouseEvent,
-  useState,
-} from "react";
+import React, { cloneElement, ReactElement, MouseEvent, useState } from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { MyContextMenuStripProps } from "../../util";
-
 
 export default function MyContextMenuStrip({
   callbacks,
   target,
 }: MyContextMenuStripProps) {
+  if (!callbacks || callbacks.length == 0) {
+    return target;
+  }
+
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -20,6 +18,7 @@ export default function MyContextMenuStrip({
 
   const openMenu = (event: MouseEvent<HTMLElement>) => {
     event.preventDefault();
+    // console.log(`callbacks length ${callbacks.length}`);
     setContextMenu({
       mouseX: event.clientX + 2,
       mouseY: event.clientY - 4,
@@ -39,13 +38,11 @@ export default function MyContextMenuStrip({
       },
     }
   );
-
   return (
     <>
       {wrappedTarget}
-
       <Menu
-        open={!!contextMenu} // первый ! приводит к boolean и навешивает отрицание, второй ! еще раз навешивает отрицание чтобы убрать предыдущее 
+        open={!!contextMenu} // первый ! приводит к boolean и навешивает отрицание, второй ! еще раз навешивает отрицание чтобы убрать предыдущее
         onClose={closeMenu}
         anchorReference="anchorPosition"
         anchorPosition={

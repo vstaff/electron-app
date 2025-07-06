@@ -33,6 +33,7 @@ export default class HashTable {
   private getInitialHash(key: Key): number {
     let hash = 0;
     for (const c of key.name) hash += c.charCodeAt(0);
+    console.log(`from getInitialHash ${key.birthDate}`);
     hash += parseInt(key.birthDate.replace(/\D/g, ''), 10);
     hash = hash * hash;
     const hashStr = hash.toString();
@@ -79,16 +80,22 @@ export default class HashTable {
     let i = 1;
 
     while (this.nodes[idx].status !== Status.FREE) {
+      if (this.isKeyAt(key, idx, Status.REMOVED)) break;
       if (this.isKeyAt(key, idx)) {
         this.nodes[idx].status = Status.REMOVED;
         this.spaceLeft++;
         if (this.spaceLeft >= this.size * 0.7 && this.size > 1) {
-          this.resize(Math.floor(this.size / 2));
+          const nonEmptyCount = this.nodes.reduce((count, node) => node.status !== Status.FREE ? count + 1 : count, 0);
+          const desireSize = Math.ceil(this.size * 0.8);
+          const finalSize = Math.max(Math.ceil(nonEmptyCount * 1.1), desireSize);
+          this.resize(finalSize);
         }
+        console.log("удаление завершено true");
         return true;
       }
       idx = this.getSecondaryHash(initialHash, i++);
     }
+    console.log("удаление завершено false")
     return false;
   }
 
@@ -104,21 +111,13 @@ export default class HashTable {
     return null;
   }
 
-  private isKeyAt(key: Key, idx: number): boolean {
+  private isKeyAt(key: Key, idx: number, expectedStatus: Status = Status.OCCUPIED): boolean {
     const node = this.nodes[idx];
-    return node.key !== undefined && node.status === Status.OCCUPIED && node.key.name === key.name && node.key.birthDate === key.birthDate;
+    return node.key !== undefined && node.status === expectedStatus && node.key.name === key.name && node.key.birthDate === key.birthDate;
   }
 
   resize(newSize: number): void {
     const oldNodes = this.nodes;
-    /* 
-    key
-    value
-    status
-    initialHash
-    secondaryHash
-    originRow
-    */
     const items: { key: Key; value?: Value, status?: Status, initialHash?: number, secondaryHash?: number, }[] = [];
     for (const node of oldNodes) {
       if (node.status !== Status.FREE && node.key !== undefined && node.value !== undefined) {
