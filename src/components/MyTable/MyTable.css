@@ -7,3 +7,7 @@
     cursor: pointer;
     background-color: rgba(211, 211, 211, 0.144);
 }
+
+.students-row.removed, .grades-row.removed {
+    background-color: palevioletred;
+}

@@ -88,7 +88,7 @@ export default function App() {
     console.log(formJSON);
     handleAddFormClose();
   };
-  const handleNewGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
+  const handleNewGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {}; // TODO: сделать обработчик отправки формы для создания новой записи в справочнике Оценки
 
   const [isFindRecordFormOpen, setIsFindRecordFormOpen] = useState(false);
   const handleFindRecordFormClose = () => {
@@ -110,11 +110,6 @@ export default function App() {
       const key = new Key(
         formJSON["student-name"],
         correctDate(formJSON["student-birth-date"])
-      );
-      const value = new Value(
-        `${formJSON["student-class-number"].replace('"', "")}${
-          formJSON["student-class-letter"]
-        }`
       );
 
       const idx = studentsHashTable.search(key); // что делать дальше хз
@@ -143,6 +138,52 @@ export default function App() {
   };
 
   const handleFindGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
+
+  // remove
+  const [isRemoveFormOpen, setIsRemoveFormOpen] = useState(false);
+  const handleRemoveFormClose = () => {
+    setIsRemoveFormOpen(false);
+  };
+  const [removeRecordType, setRemoveRecordType] = useState<"student" | "grade">(
+    "student"
+  );
+
+  const handleRemoveStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const raw = Object.fromEntries((formData as any).entries());
+    const formJSON = raw as StudentFormDataJSON;
+
+    console.log(formJSON);
+    console.log(correctDate(formJSON["student-birth-date"]));
+    try {
+      const key = new Key(
+        formJSON["student-name"],
+        correctDate(formJSON["student-birth-date"])
+      );
+
+      const idx = studentsHashTable.search(key); // что делать дальше хз
+      if (Object.is(idx, null)) {
+        alert("Нет такой записи");
+      } else {
+        handleRemoveFormClose();
+        const row = document.getElementById(`students-row-${idx}`);
+        row && row.classList.add("removed");
+        setStudentsHashTable((prevStudentsHashTable) => {
+          prevStudentsHashTable.remove(key)
+          return prevStudentsHashTable;
+        });
+        
+      }
+    } catch (err) {
+      alert(`Не получилось найти указанную запись`);
+    }
+
+    console.log(formJSON);
+    handleRemoveFormClose();
+  };
+
+  const handleRemoveGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
   // </form>
 
   // <dnd>
@@ -282,6 +323,10 @@ export default function App() {
                 callback: () => setIsAddFormOpen(true),
               },
               {
+                name: "Удалить",
+                callback: () => setIsRemoveFormOpen(true),
+              },
+              {
                 name: "Экспортировать",
                 callback: () => console.log("экспорт студентов"),
               },
@@ -333,14 +378,28 @@ export default function App() {
 
         {/* Форма для поиска записи */}
         <MyForm
+          keyOnly={true}
           formTitle="Найти запись"
-          formMessage="Заполните форму чтобы найти запись в справочниках"
+          formMessage="Заполните форму чтобы найти запись в справочнике"
           isFormOpen={isFindRecordFormOpen}
           handleClose={handleFindRecordFormClose}
           handleStudentSubmit={handleFindStudentSubmit}
           handleGradeSubmit={handleFindGradeSubmit}
           setRecordType={setFindRecordType}
           recordType={findRecordType}
+        />
+
+        {/* Форма для удаления записи */}
+        <MyForm 
+          keyOnly={true}
+          formTitle="Удалить запись"
+          formMessage="Заполните форму чтобы удалить запись из справочника"
+          isFormOpen={isRemoveFormOpen}
+          handleClose={handleRemoveFormClose}
+          handleStudentSubmit={handleRemoveStudentSubmit}
+          handleGradeSubmit={handleRemoveGradeSubmit} 
+          setRecordType={setRemoveRecordType}
+          recordType={removeRecordType}
         />
       </div>
     </>

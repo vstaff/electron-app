@@ -8,8 +8,7 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import "./MyTable.css";
 import MyContextMenuStrip from "../MyContextMenuStrip/MyContextMenuStrip";
-import { MyTableProps, table_row } from "../../util";
-import HashNode from "../../dsa/hash_table/HashNode";
+import { MyTableProps, } from "../../util";
 
 export default function MyTable({
   tableFor,
@@ -19,14 +18,19 @@ export default function MyTable({
   highlightRow,
 }: MyTableProps) {
   return (
-    <TableContainer component={Paper} sx={{ maxHeight: 500, overflowY: "auto", scrollBehavior: "smooth", }}>
-      <Table stickyHeader
-        className="open-sans-regular"
-        sx={{ minWidth: 650 }}
-        aria-label="simple table"
-      >
-        <MyContextMenuStrip
-          target={
+    <MyContextMenuStrip
+      callbacks={tableHeadCallbacks}
+      target={
+        <TableContainer
+          component={Paper}
+          sx={{ maxHeight: 500, overflowY: "auto", scrollBehavior: "smooth" }}
+        >
+          <Table
+            stickyHeader
+            className="open-sans-regular"
+            sx={{ minWidth: 650 }}
+            aria-label="simple table"
+          >
             <TableHead>
               <TableRow>
                 <TableCell align="left">#</TableCell>
@@ -37,23 +41,21 @@ export default function MyTable({
                 ))}
               </TableRow>
             </TableHead>
-          }
-          callbacks={tableHeadCallbacks}
-        />
 
-        <TableBody>
-          {tableContent?.map((content, cidx) => (
-            <MyContextMenuStrip
-              // callbacks={callbacks.tableContent}
-              callbacks={content.callbacks}
-              key={cidx}
-              target={
+            <TableBody>
+              {tableContent?.map((content, cidx) => (
                 <TableRow
+                  key={cidx}
                   className={`${tableFor}-row`}
                   id={`${tableFor}-row-${cidx}`}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                   style={
-                    highlightRow === cidx ? { backgroundColor: "lightgray", transition: "background-color 0.5s ease"} : {}
+                    highlightRow === cidx
+                      ? {
+                          backgroundColor: "lightgray",
+                          transition: "background-color 0.5s ease",
+                        }
+                      : {}
                   }
                 >
                   {content.content.map((item, idx) => (
@@ -62,11 +64,11 @@ export default function MyTable({
                     </TableCell>
                   ))}
                 </TableRow>
-              }
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      }
+    />
   );
 }

@@ -21,6 +21,7 @@ import { DialogActions } from "@mui/material";
 import { MyFormProps } from "../../util";
 
 export default function MyForm({
+  keyOnly,
   formTitle,
   formMessage,
   isFormOpen,
@@ -30,6 +31,7 @@ export default function MyForm({
   setRecordType,
   recordType,
 }: MyFormProps) {
+  keyOnly = keyOnly ?? false;
   return (
     <Dialog open={isFormOpen} onClose={handleClose}>
       <DialogTitle>{formTitle}</DialogTitle>
@@ -37,10 +39,12 @@ export default function MyForm({
       <DialogContent
         sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
       >
-        <DialogContentText>
-          {formMessage}
-        </DialogContentText>
-        <form onSubmit={recordType === "student" ? handleStudentSubmit : handleGradeSubmit}>
+        <DialogContentText>{formMessage}</DialogContentText>
+        <form
+          onSubmit={
+            recordType === "student" ? handleStudentSubmit : handleGradeSubmit
+          }
+        >
           <FormLabel id="chose-new-record-type-label">Тип записи</FormLabel>
           <RadioGroup
             aria-labelledby="demo-radio-buttons-group-label"
@@ -76,36 +80,41 @@ export default function MyForm({
                 variant="standard"
               />
 
-              <TextField
-                required
-                margin="dense"
-                id="student-class-number"
-                name="student-class-number"
-                label="Класс Студента"
-                type="number"
-                fullWidth
-                variant="standard"
-                inputProps={{
-                  min: 1,
-                  max: 11,
-                  step: 1,
-                }}
-              />
-
-              <FormLabel id="student-class-letter-label">Параллель*</FormLabel>
-              <Select
-                required
-                labelId="student-class-letter-label"
-                name="student-class-letter"
-                id="student-class-letter"
-                label="Параллель"
-                // value={"А"}
-              >
-                <MenuItem value={"А"}>А</MenuItem>
-                <MenuItem value={"Б"}>Б</MenuItem>
-                <MenuItem value={"В"}>В</MenuItem>
-                <MenuItem value={"Г"}>Г</MenuItem>
-              </Select>
+              {!keyOnly && (
+                <>
+                  <TextField
+                    required
+                    margin="dense"
+                    id="student-class-number"
+                    name="student-class-number"
+                    label="Класс Студента"
+                    type="number"
+                    fullWidth
+                    variant="standard"
+                    inputProps={{
+                      min: 1,
+                      max: 11,
+                      step: 1,
+                    }}
+                  />
+                  <FormLabel id="student-class-letter-label">
+                    Параллель*
+                  </FormLabel>
+                  <Select
+                    required
+                    labelId="student-class-letter-label"
+                    name="student-class-letter"
+                    id="student-class-letter"
+                    label="Параллель"
+                    // value={"А"}
+                  >
+                    <MenuItem value={"А"}>А</MenuItem>
+                    <MenuItem value={"Б"}>Б</MenuItem>
+                    <MenuItem value={"В"}>В</MenuItem>
+                    <MenuItem value={"Г"}>Г</MenuItem>
+                  </Select>
+                </>
+              )}
 
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DemoContainer components={["DatePicker"]}>

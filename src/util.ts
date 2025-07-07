@@ -58,6 +58,7 @@ export interface MyTableProps {
 }
 
 export interface MyFormProps {
+  keyOnly?: boolean;
   formTitle: string;
   formMessage: string;
   isFormOpen: boolean;
