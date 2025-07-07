@@ -48,15 +48,16 @@ export default function App() {
   // </catalogs_data>
 
   // <form>
+  // <insert>
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const handleAddFormClose = () => {
+    setIsAddFormOpen(false);
+  };
   const [newRecordType, setNewRecordType] = useState<"student" | "grade">(
     "student"
   );
-  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const handleClickOpen = () => {
     setIsAddFormOpen(true);
-  };
-  const handleAddFormClose = () => {
-    setIsAddFormOpen(false);
   };
   const handleNewStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -64,8 +65,7 @@ export default function App() {
     const raw = Object.fromEntries((formData as any).entries());
     const formJSON = raw as StudentFormDataJSON;
 
-    console.log(formJSON);
-    console.log(correctDate(formJSON["student-birth-date"]));
+    console.log("handleNewStudentSubmit; данные из формы ", formJSON);
     try {
       const key = new Key(
         formJSON["student-name"],
@@ -84,12 +84,12 @@ export default function App() {
     } catch (err) {
       alert(`Не получилось добавить запись для Справочника Студенты`);
     }
-
-    console.log(formJSON);
     handleAddFormClose();
   };
   const handleNewGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {}; // TODO: сделать обработчик отправки формы для создания новой записи в справочнике Оценки
+  // </insert>
 
+  // <find>
   const [isFindRecordFormOpen, setIsFindRecordFormOpen] = useState(false);
   const handleFindRecordFormClose = () => {
     setIsFindRecordFormOpen(false);
@@ -97,15 +97,13 @@ export default function App() {
   const [findRecordType, setFindRecordType] = useState<"student" | "grade">(
     "student"
   );
-
   const handleFindStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const raw = Object.fromEntries((formData as any).entries());
     const formJSON = raw as StudentFormDataJSON;
 
-    console.log(formJSON);
-    console.log(correctDate(formJSON["student-birth-date"]));
+    console.log("handleFindStudentSubmit; данные из формы ", formJSON);
     try {
       const key = new Key(
         formJSON["student-name"],
@@ -119,7 +117,7 @@ export default function App() {
         handleFindRecordFormClose();
         const row = document.getElementById(`students-row-${idx}`);
         if (row) {
-          console.log("here is row: ", row);
+          console.log("handleNewStudentSubmit; вот строка ", row);
           row.scrollIntoView({
             behavior: "smooth",
             block: "center",
@@ -132,14 +130,11 @@ export default function App() {
     } catch (err) {
       alert(`Не получилось найти указанную запись`);
     }
-
-    console.log(formJSON);
     handleFindRecordFormClose();
   };
-
   const handleFindGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
-
-  // remove
+  // </find>
+  // <remove>
   const [isRemoveFormOpen, setIsRemoveFormOpen] = useState(false);
   const handleRemoveFormClose = () => {
     setIsRemoveFormOpen(false);
@@ -147,15 +142,15 @@ export default function App() {
   const [removeRecordType, setRemoveRecordType] = useState<"student" | "grade">(
     "student"
   );
-
-  const handleRemoveStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleRemoveStudentSubmit = (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const raw = Object.fromEntries((formData as any).entries());
     const formJSON = raw as StudentFormDataJSON;
 
-    console.log(formJSON);
-    console.log(correctDate(formJSON["student-birth-date"]));
+    console.log("handleRemoveStudentSubmit; данные из формы ", formJSON);
     try {
       const key = new Key(
         formJSON["student-name"],
@@ -170,20 +165,19 @@ export default function App() {
         const row = document.getElementById(`students-row-${idx}`);
         row && row.classList.add("removed");
         setStudentsHashTable((prevStudentsHashTable) => {
-          prevStudentsHashTable.remove(key)
+          prevStudentsHashTable.remove(key);
           return prevStudentsHashTable;
         });
-        
       }
     } catch (err) {
       alert(`Не получилось найти указанную запись`);
     }
-
-    console.log(formJSON);
     handleRemoveFormClose();
   };
-
-  const handleRemoveGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
+  const handleRemoveGradeSubmit = (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {};
+  // </remove>
   // </form>
 
   // <dnd>
@@ -289,29 +283,7 @@ export default function App() {
               "Класс",
               "Дата Рождения",
             ]}
-            tableContent={makeHTRaw(studentsHashTable, [
-              {
-                name: "Удалить",
-                callback: ({
-                  name,
-                  birthDate,
-                  from,
-                }: {
-                  name: string;
-                  birthDate: string;
-                  from: string;
-                }) => {
-                  console.log(
-                    `Удалить ${name} ${birthDate} из справочника ${from}`
-                  );
-                  setStudentsHashTable((prevStudentsHashTable) => {
-                    const newHashTable = prevStudentsHashTable.clone();
-                    newHashTable.remove(new Key(name, birthDate));
-                    return newHashTable;
-                  });
-                },
-              },
-            ])}
+            tableContent={makeHTRaw(studentsHashTable)}
             tableHeadCallbacks={[
               {
                 name: "Найти",
@@ -390,14 +362,14 @@ export default function App() {
         />
 
         {/* Форма для удаления записи */}
-        <MyForm 
+        <MyForm
           keyOnly={true}
           formTitle="Удалить запись"
           formMessage="Заполните форму чтобы удалить запись из справочника"
           isFormOpen={isRemoveFormOpen}
           handleClose={handleRemoveFormClose}
           handleStudentSubmit={handleRemoveStudentSubmit}
-          handleGradeSubmit={handleRemoveGradeSubmit} 
+          handleGradeSubmit={handleRemoveGradeSubmit}
           setRecordType={setRemoveRecordType}
           recordType={removeRecordType}
         />

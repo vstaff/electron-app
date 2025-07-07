@@ -53,7 +53,7 @@ export interface MyTableProps {
   highlightRow?: number | null;
   tableFor: "students" | "grades",
   tableHead: string[];
-  tableContent?: table_row[];
+  tableContent?: string[][];
   tableHeadCallbacks: Callback[],
 }
 
@@ -116,26 +116,18 @@ export interface StudentFormDataJSON {
 }
 
 // преобразовать хеш-таблицу для отображения в обычной таблице 
-export const makeHTRaw = (hashTable: HashTable, callbacks: Callback[]): table_row[] => {
-  const result: table_row[] = [];
+export const makeHTRaw = (hashTable: HashTable): string[][] => {
+  const result: string[][] = [];
 
   hashTable.getNodes().forEach((node, idx) => {
     if (node !== undefined && node.key !== undefined && node.value !== undefined && node.status !== undefined && node.initialHash !== undefined && node.secondaryHash !== undefined) {
       result.push(
-        {
-          content: [idx.toString(), node.status.toString(), node.initialHash.toString(), node.secondaryHash.toString(), node.key.name, node.value.classCode, node.key.birthDate],
-          callbacks: callbacks.map(cb => ({
-            name: cb.name,
-            callback: () => cb.callback(node.key)
-          })),
-          // callbacks: callbacks.map(callback => ({ name: callback.name, callback: callback.callback, } as Callback))
-        }
+        [idx.toString(), node.status.toString(), node.initialHash.toString(), node.secondaryHash.toString(), node.key.name, node.value.classCode, node.key.birthDate]
       )
     } else {
-      result.push({
-        content: [idx.toString(), 0, ...Array(5).fill(BLANK_IN_TABLE)],
-        callbacks: [],
-      })
+      result.push(
+        [idx.toString(), "0", ...Array(5).fill(BLANK_IN_TABLE)]
+      )
     }
   });
 

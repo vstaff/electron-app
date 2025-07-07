@@ -58,7 +58,7 @@ export default function MyTable({
                       : {}
                   }
                 >
-                  {content.content.map((item, idx) => (
+                  {content.map((item, idx) => (
                     <TableCell key={idx} align="left">
                       {item}
                     </TableCell>
