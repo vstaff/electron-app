@@ -50,19 +50,22 @@ export interface table_row {
 }
 
 export interface MyTableProps {
+  highlightRow?: number | null;
   tableFor: "students" | "grades",
   tableHead: string[];
   tableContent?: table_row[];
   tableHeadCallbacks: Callback[],
 }
 
-export interface AddRecordFormProps {
-  isAddFormOpen: boolean,
-  handleClose: () => void,
-  handleNewStudentSubmit: (event: React.FormEvent<HTMLFormElement>) => void,
-  handleNewGradeSubmit: (event: React.FormEvent<HTMLFormElement>) => void,
-  setNewRecordType: React.Dispatch<React.SetStateAction<"student" | "grade">>,
-  newRecordType: "student" | "grade",
+export interface MyFormProps {
+  formTitle: string;
+  formMessage: string;
+  isFormOpen: boolean;
+  handleClose: () => void;
+  handleStudentSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  handleGradeSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  setRecordType: React.Dispatch<React.SetStateAction<"student" | "grade">>;
+  recordType: "student" | "grade";
 }
 
 export interface MyDNDProps {
@@ -72,6 +75,8 @@ export interface MyDNDProps {
   validateFile: (text: string) => boolean;
   contentRejected: boolean;
   setContentRejected: React.Dispatch<React.SetStateAction<boolean>>;
+  prevFileName: string;
+  setPrevFileName: React.Dispatch<React.SetStateAction<string>>;
 }
 // </props>
 
@@ -101,7 +106,7 @@ export enum Status {
   REMOVED = 2,
 }
 
-export interface FormDataJSON {
+export interface StudentFormDataJSON {
   "new-record-type": string;
   "student-birth-date": string;
   "student-class-letter": string;

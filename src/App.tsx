@@ -12,7 +12,6 @@ import { useState } from "react";
 // <my_components>
 import MyDND from "./components/MyDND/MyDND";
 import MyTable from "./components/MyTable/MyTable";
-import AddRecordForm from "./components/AddRecordForm/AddRecordForm";
 // </my_components>
 
 // <mui>
@@ -27,9 +26,18 @@ import Value from "./dsa/hash_table/Value";
 // </dsa>
 
 // util
-import { makeHTRaw, correctDate, FormDataJSON, INITIAL_HASH_SIZE, validateStudentsFile } from "./util";
+import {
+  makeHTRaw,
+  correctDate,
+  StudentFormDataJSON,
+  INITIAL_HASH_SIZE,
+  validateStudentsFile,
+} from "./util";
+import MyForm from "./components/MyForm/MyForm";
 
 export default function App() {
+  const [highlightIdx, setHighlightIdx] = useState<number | null>(null); // Для подсветки найденной строки
+
   // <catalogs_data>
   const [studentsRawData, setStudentsRawData] = useState<string[]>([]);
   const [gradesRawData, setGradesRawData] = useState<string[]>([]);
@@ -47,14 +55,14 @@ export default function App() {
   const handleClickOpen = () => {
     setIsAddFormOpen(true);
   };
-  const handleClose = () => {
+  const handleAddFormClose = () => {
     setIsAddFormOpen(false);
   };
   const handleNewStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const raw = Object.fromEntries((formData as any).entries());
-    const formJSON = raw as FormDataJSON;
+    const formJSON = raw as StudentFormDataJSON;
 
     console.log(formJSON);
     console.log(correctDate(formJSON["student-birth-date"]));
@@ -75,13 +83,66 @@ export default function App() {
       });
     } catch (err) {
       alert(`Не получилось добавить запись для Справочника Студенты`);
-      return;
     }
 
     console.log(formJSON);
-    handleClose();
+    handleAddFormClose();
   };
   const handleNewGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
+
+  const [isFindRecordFormOpen, setIsFindRecordFormOpen] = useState(false);
+  const handleFindRecordFormClose = () => {
+    setIsFindRecordFormOpen(false);
+  };
+  const [findRecordType, setFindRecordType] = useState<"student" | "grade">(
+    "student"
+  );
+
+  const handleFindStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const raw = Object.fromEntries((formData as any).entries());
+    const formJSON = raw as StudentFormDataJSON;
+
+    console.log(formJSON);
+    console.log(correctDate(formJSON["student-birth-date"]));
+    try {
+      const key = new Key(
+        formJSON["student-name"],
+        correctDate(formJSON["student-birth-date"])
+      );
+      const value = new Value(
+        `${formJSON["student-class-number"].replace('"', "")}${
+          formJSON["student-class-letter"]
+        }`
+      );
+
+      const idx = studentsHashTable.search(key); // что делать дальше хз
+      if (Object.is(idx, null)) {
+        alert("Нет такой записи");
+      } else {
+        handleFindRecordFormClose();
+        const row = document.getElementById(`students-row-${idx}`);
+        if (row) {
+          console.log("here is row: ", row);
+          row.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+        }
+        setHighlightIdx(idx);
+        setTimeout(() => setHighlightIdx(null), 2000);
+      }
+    } catch (err) {
+      alert(`Не получилось найти указанную запись`);
+    }
+
+    console.log(formJSON);
+    handleFindRecordFormClose();
+  };
+
+  const handleFindGradeSubmit = (event: React.FormEvent<HTMLFormElement>) => {};
   // </form>
 
   // <dnd>
@@ -89,6 +150,8 @@ export default function App() {
     useState(false);
   const [gradesDNDContentRejected, setGradesDNDContentRejected] =
     useState(false);
+  const [studentsPrevFileName, setStudentsPrevFileName] = useState("");
+  const [gradesPrevFileName, setGradesPrevFileName] = useState("");
   // </dnd>
 
   // <effects>
@@ -112,7 +175,9 @@ export default function App() {
       }
     }
 
-    setStudentsHashTable(wasBreak ? new HashTable(INITIAL_HASH_SIZE) : newHashTable);
+    setStudentsHashTable((prevStudentsHashTable) =>
+      wasBreak ? prevStudentsHashTable : newHashTable
+    );
   }, [studentsRawData]);
 
   useEffect(() => {
@@ -120,11 +185,11 @@ export default function App() {
     studentsHashTable.print();
   }, [studentsHashTable]);
 
-  useEffect(() => {
-    if (studentsDNDContentRejected) {
-      setStudentsHashTable(new HashTable(INITIAL_HASH_SIZE));
-    }
-  }, [studentsDNDContentRejected]);
+  // useEffect(() => {
+  //   if (studentsDNDContentRejected) {
+  //     setStudentsHashTable(new HashTable(INITIAL_HASH_SIZE));
+  //   }
+  // }, [studentsDNDContentRejected]);
 
   useEffect(() => {
     if (gradesDNDContentRejected) {
@@ -144,6 +209,8 @@ export default function App() {
           >
             <h3 className="open-sans-light">Справочник студентов</h3>
             <MyDND
+              prevFileName={studentsPrevFileName}
+              setPrevFileName={setStudentsPrevFileName}
               name="Ученики"
               setRawData={setStudentsRawData}
               alertMessage="Для справочника Студенты каждая строка входного файла должна содержать: ФИО;Класс;Дата рождения"
@@ -156,6 +223,8 @@ export default function App() {
           <div className="load-file-container" id="load-file-grades-container">
             <h3 className="open-sans-light">Справочник оценок</h3>
             <MyDND
+              prevFileName={gradesPrevFileName}
+              setPrevFileName={setGradesPrevFileName}
               name="Оценки"
               setRawData={setGradesRawData}
               alertMessage="Для справочника Оценки каждая строка входного файла должна содержать: ФИО;Предмет;Оценка;Дата"
@@ -170,6 +239,7 @@ export default function App() {
           <h2 className="open-sans-light">Хеш-таблица</h2>
           <MyTable
             tableFor="students"
+            highlightRow={highlightIdx}
             tableHead={[
               "Статус",
               "Первичный хеш",
@@ -181,32 +251,45 @@ export default function App() {
             tableContent={makeHTRaw(studentsHashTable, [
               {
                 name: "Удалить",
-                callback: ({ name, birthDate, from, } : { name: string, birthDate: string, from: string, }) => {
-                  console.log(`Удалить ${name} ${birthDate} из справочника ${from}`);
-                  setStudentsHashTable(prevStudentsHashTable => {
+                callback: ({
+                  name,
+                  birthDate,
+                  from,
+                }: {
+                  name: string;
+                  birthDate: string;
+                  from: string;
+                }) => {
+                  console.log(
+                    `Удалить ${name} ${birthDate} из справочника ${from}`
+                  );
+                  setStudentsHashTable((prevStudentsHashTable) => {
                     const newHashTable = prevStudentsHashTable.clone();
                     newHashTable.remove(new Key(name, birthDate));
                     return newHashTable;
-                  })
-                }
-              }
+                  });
+                },
+              },
             ])}
-            tableHeadCallbacks={
-              [
-                {
-                  name: "Добавить",
-                  callback: () => setIsAddFormOpen(true),
-                },
-                {
-                  name: "Экспортировать",
-                  callback: () => console.log("экспорт студентов"),
-                },
-                {
-                  name: "Импортировать",
-                  callback: () => console.log("импорт студентов"),
-                },
-              ]
-            }
+            tableHeadCallbacks={[
+              {
+                name: "Найти",
+                callback: () => setIsFindRecordFormOpen(true),
+              },
+
+              {
+                name: "Добавить",
+                callback: () => setIsAddFormOpen(true),
+              },
+              {
+                name: "Экспортировать",
+                callback: () => console.log("экспорт студентов"),
+              },
+              {
+                name: "Импортировать",
+                callback: () => console.log("импорт студентов"),
+              },
+            ]}
           />
         </section>
 
@@ -227,13 +310,37 @@ export default function App() {
           <AddIcon />
         </Fab>
 
-        <AddRecordForm
+        {/* <AddRecordForm
           isAddFormOpen={isAddFormOpen}
-          handleClose={handleClose}
+          handleClose={handleAddFormClose}
           handleNewStudentSubmit={handleNewStudentSubmit}
           handleNewGradeSubmit={handleNewGradeSubmit}
           setNewRecordType={setNewRecordType}
           newRecordType={newRecordType}
+        /> */}
+
+        {/* Форма для добавления записи */}
+        <MyForm
+          formTitle="Добавить запись"
+          formMessage="Заполните форму чтобы добавить новую запись"
+          isFormOpen={isAddFormOpen}
+          handleClose={handleAddFormClose}
+          handleStudentSubmit={handleNewStudentSubmit}
+          handleGradeSubmit={handleNewGradeSubmit}
+          setRecordType={setNewRecordType}
+          recordType={newRecordType}
+        />
+
+        {/* Форма для поиска записи */}
+        <MyForm
+          formTitle="Найти запись"
+          formMessage="Заполните форму чтобы найти запись в справочниках"
+          isFormOpen={isFindRecordFormOpen}
+          handleClose={handleFindRecordFormClose}
+          handleStudentSubmit={handleFindStudentSubmit}
+          handleGradeSubmit={handleFindGradeSubmit}
+          setRecordType={setFindRecordType}
+          recordType={findRecordType}
         />
       </div>
     </>

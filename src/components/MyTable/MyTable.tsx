@@ -16,10 +16,11 @@ export default function MyTable({
   tableHead,
   tableHeadCallbacks,
   tableContent,
+  highlightRow,
 }: MyTableProps) {
   return (
-    <TableContainer component={Paper}>
-      <Table
+    <TableContainer component={Paper} sx={{ maxHeight: 500, overflowY: "auto", scrollBehavior: "smooth", }}>
+      <Table stickyHeader
         className="open-sans-regular"
         sx={{ minWidth: 650 }}
         aria-label="simple table"
@@ -48,8 +49,12 @@ export default function MyTable({
               key={cidx}
               target={
                 <TableRow
-                  className="table-row"
+                  className={`${tableFor}-row`}
+                  id={`${tableFor}-row-${cidx}`}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  style={
+                    highlightRow === cidx ? { backgroundColor: "lightgray", transition: "background-color 0.5s ease"} : {}
+                  }
                 >
                   {content.content.map((item, idx) => (
                     <TableCell key={idx} align="left">

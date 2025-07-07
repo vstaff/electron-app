@@ -18,34 +18,36 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DialogActions } from "@mui/material";
-import { AddRecordFormProps } from "../../util";
+import { MyFormProps } from "../../util";
 
-export default function AddRecordForm({
-  isAddFormOpen,
+export default function MyForm({
+  formTitle,
+  formMessage,
+  isFormOpen,
   handleClose,
-  handleNewStudentSubmit,
-  handleNewGradeSubmit,
-  setNewRecordType,
-  newRecordType,
-}: AddRecordFormProps) {
+  handleStudentSubmit,
+  handleGradeSubmit,
+  setRecordType,
+  recordType,
+}: MyFormProps) {
   return (
-    <Dialog open={isAddFormOpen} onClose={handleClose}>
-      <DialogTitle>Добавить запись</DialogTitle>
+    <Dialog open={isFormOpen} onClose={handleClose}>
+      <DialogTitle>{formTitle}</DialogTitle>
 
       <DialogContent
         sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
       >
         <DialogContentText>
-          Заполните форму чтобы добавить новую запись
+          {formMessage}
         </DialogContentText>
-        <form onSubmit={newRecordType === "student" ? handleNewStudentSubmit : handleNewGradeSubmit}>
+        <form onSubmit={recordType === "student" ? handleStudentSubmit : handleGradeSubmit}>
           <FormLabel id="chose-new-record-type-label">Тип записи</FormLabel>
           <RadioGroup
             aria-labelledby="demo-radio-buttons-group-label"
-            defaultValue={newRecordType}
+            defaultValue={recordType}
             name="new-record-type"
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setNewRecordType(event.target.value as "student" | "grade")
+              setRecordType(event.target.value as "student" | "grade")
             }
           >
             <FormControlLabel
@@ -60,7 +62,7 @@ export default function AddRecordForm({
             />
           </RadioGroup>
 
-          {newRecordType === "student" ? (
+          {recordType === "student" ? (
             <>
               <TextField
                 // autoFocus

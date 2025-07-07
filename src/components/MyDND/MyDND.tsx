@@ -17,6 +17,8 @@ export default function MyDND({
   validateFile,
   contentRejected,
   setContentRejected,
+  prevFileName,
+  setPrevFileName,
 }: MyDNDProps) {
   // const [contentRejected, setContentRejected] = useState(false);
   const onDrop = useCallback((acceptedFiles: readonly FileWithPath[]) => {
@@ -60,7 +62,7 @@ export default function MyDND({
       className="dropzone my-dnd-container open-sans-regular"
     >
       {(() => {
-        if (acceptedFiles.length == 0 || contentRejected) {
+        if (acceptedFiles.length == 0 && !prevFileName) {
           return (
             <>
               <AttachFileIcon />
@@ -68,7 +70,8 @@ export default function MyDND({
               <p className="text">Справочник {name} (только .txt)</p>
             </>
           );
-        } else {
+        } else if (acceptedFiles.length && !contentRejected) {
+          setPrevFileName(acceptedFiles[0].name);
           return (
             <>
               <DescriptionIcon />
@@ -76,7 +79,15 @@ export default function MyDND({
               <p className="text">{acceptedFiles[0].name}</p>
             </>
           );
-        }
+         } else {
+          return (
+            <>
+              <DescriptionIcon />
+              <input {...getInputProps()} />
+              <p className="text">{prevFileName}</p>
+            </>
+          )
+         }
       })()}
     </section>
   );
