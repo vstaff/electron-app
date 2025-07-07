@@ -88,7 +88,7 @@ export interface HashNodeConstructor {
 
 // other
 const BLANK_IN_TABLE = "_";
-export const INITIAL_HASH_SIZE = 4;
+export const INITIAL_HASH_SIZE = 1;
 
 export const MONTHS = [
   'янв', 'фев', 'мар', 'апр', 'май', 'июн',
@@ -127,7 +127,7 @@ export const makeHTRaw = (hashTable: HashTable, callbacks: Callback[]): table_ro
       )
     } else {
       result.push({
-        content: [idx.toString(), ...Array(6).fill(BLANK_IN_TABLE)],
+        content: [idx.toString(), 0, ...Array(5).fill(BLANK_IN_TABLE)],
         callbacks: [],
       })
     }

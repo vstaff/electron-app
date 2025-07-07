@@ -112,7 +112,7 @@ export default function App() {
       }
     }
 
-    setStudentsHashTable(wasBreak ? new HashTable(10) : newHashTable);
+    setStudentsHashTable(wasBreak ? new HashTable(INITIAL_HASH_SIZE) : newHashTable);
   }, [studentsRawData]);
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export default function App() {
 
   useEffect(() => {
     if (studentsDNDContentRejected) {
-      setStudentsHashTable(new HashTable(10));
+      setStudentsHashTable(new HashTable(INITIAL_HASH_SIZE));
     }
   }, [studentsDNDContentRejected]);
 
