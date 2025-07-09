@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { ReactElement, ReactNode } from "react";
 import React from "react";
 import Key from "./dsa/hash_table/Key";
 import Value from "./dsa/hash_table/Value";
@@ -41,6 +41,12 @@ export const initialAlerts: alert_object[] = [
       message: "Указанной записи не существует в указанном справочнике",
       open: false,
     },
+    {
+      name: "duplicate_error",
+      title: "Не получилось добавить данные в справочник",
+      message: "Данная запись уже существует",
+      open: false,
+    }
   ]
 
 // <validation>
@@ -93,16 +99,14 @@ export interface MyTableProps {
   removedRows?: number[]
 }
 
-export interface MyFormProps {
+export interface MyFormProps2 {
   keyOnly?: boolean;
   formTitle: string;
   formMessage: string;
   isFormOpen: boolean;
   handleClose: () => void;
-  handleStudentSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  handleGradeSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  setRecordType: React.Dispatch<React.SetStateAction<"student" | "grade">>;
-  recordType: "student" | "grade";
+  handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  children: ReactNode,
 }
 
 export interface MyDNDProps {

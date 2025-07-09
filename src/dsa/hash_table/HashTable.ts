@@ -159,23 +159,31 @@ export default class HashTable {
 
   clone(): HashTable {
     const copy = new HashTable(this.size);
+    copy.k = this.k;
+    copy.spaceLeft = this.spaceLeft;
+
+    // Создаем глубокую копию узлов
     this.nodes.forEach((node, idx) => {
-      copy.nodes[idx] = node;
+      if (node.key && node.value) {
+        // Создаем новые экземпляры Key и Value
+        const newKey = new Key(node.key.name, node.key.birthDate);
+        const newValue = new Value(node.value.classCode);
+        copy.nodes[idx] = new HashNode({
+          key: newKey,
+          value: newValue,
+          status: node.status,
+          initialHash: node.initialHash,
+          secondaryHash: node.secondaryHash
+        });
+      } else {
+        copy.nodes[idx] = new HashNode({
+          status: node.status,
+          initialHash: node.initialHash,
+          secondaryHash: node.secondaryHash
+        });
+      }
     });
+
     return copy;
   }
-
-  // replace(idx: number) {
-  //   if (this.nodes[idx].status === Status.FREE) {
-  //     setTimeout();
-  //     return;
-  //   }
-
-  //   this.nodes[idx] = new HashNode({
-  //     ...this.nodes[idx],
-  //     key: new Key("Хуесос Пидорас Гандодн", "11 сен 2001"),
-  //     value: new Value("11Б"),
-  //   })
-  //   console.log("произошла замена!!!!")
-  // }
 }

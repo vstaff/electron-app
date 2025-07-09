@@ -3,21 +3,46 @@ div#app {
     /* background-color: pink; */
 }
 
-.app-section {
+/* .app-section {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-bottom: 1px solid rgba(211, 211, 211, 0.548);
+} */
+
+/* .app-section > * {
+    margin-bottom: 20px;
+} */
+
+/* .app-section > *:last-child {
+    margin-bottom: 0;
+} */
+
+/* .app-section:last-of-type {
+    margin-bottom: 0;
+    border: none;
+}  */
+
+/* div.load-file-container h3 {
+    margin-bottom: 5px;
+} */
+
+/* students section */
+
+.app-subsection {
     margin-bottom: 20px;
     padding: 10px;
     border-bottom: 1px solid rgba(211, 211, 211, 0.548);
 }
 
-.app-section > * {
+.app-subsection > * {
     margin-bottom: 20px;
 }
 
-.app-section > *:last-child {
+.app-subsection > *:last-child {
     margin-bottom: 0;
 }
 
-.app-section:last-of-type {
+.app-subsection:last-of-type {
     margin-bottom: 0;
     border: none;
     /* border-bottom: 1px solid red; */
