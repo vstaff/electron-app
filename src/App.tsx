@@ -32,10 +32,21 @@ import {
   StudentFormDataJSON,
   INITIAL_HASH_SIZE,
   validateStudentsFile,
+  alert_object,
+  initialAlerts,
 } from "./util";
 import MyForm from "./components/MyForm/MyForm";
+import MyAlert from "./components/MyAlert/MyAlert";
 
 export default function App() {
+  const [alerts, setAlerts] = useState<alert_object[]>(initialAlerts);
+  const toggleAlert = (name: string) =>
+    setAlerts((prevAlerts) =>
+      prevAlerts.map((al) =>
+        al.name === name ? { ...al, open: !al.open } : al
+      )
+    );
+
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null); // Для подсветки найденной строки
 
   // <catalogs_data>
@@ -82,7 +93,7 @@ export default function App() {
         return prevStudentsHashTable;
       });
     } catch (err) {
-      setTimeout(() => alert(`Не получилось добавить запись для Справочника Студенты`), 0);
+      toggleAlert("insert_error");
     }
     handleAddFormClose();
   };
@@ -112,7 +123,7 @@ export default function App() {
 
       const idx = studentsHashTable.search(key); // что делать дальше хз
       if (Object.is(idx, null)) {
-        setTimeout(() => alert("Нет такой записи"), 0);
+        toggleAlert("search_error");
       } else {
         handleFindRecordFormClose();
         const row = document.getElementById(`students-row-${idx}`);
@@ -128,7 +139,7 @@ export default function App() {
         setTimeout(() => setHighlightIdx(null), 2000);
       }
     } catch (err) {
-      setTimeout(() => alert(`Не получилось найти указанную запись`), 0);
+      toggleAlert("search_error");
     }
     handleFindRecordFormClose();
   };
@@ -159,7 +170,7 @@ export default function App() {
 
       const idx = studentsHashTable.search(key); // что делать дальше хз
       if (Object.is(idx, null)) {
-        setTimeout(() => alert("Нет такой записи"), 0);
+        toggleAlert("delete_error");
       } else {
         handleRemoveFormClose();
         const row = document.getElementById(`students-row-${idx}`);
@@ -170,7 +181,7 @@ export default function App() {
         });
       }
     } catch (err) {
-      setTimeout(() => alert(`Не получилось удалить указанную запись`), 0);
+      toggleAlert("delete_error");
     }
     handleRemoveFormClose();
   };
@@ -203,7 +214,7 @@ export default function App() {
         const value = new Value(classCode);
         newHashTable.insert(key, value);
       } catch (err) {
-        setTimeout(() => alert("Не получилось загрузить данные из файла"), 0);
+        toggleAlert("read_file_error");
         setStudentsDNDContentRejected(true);
         wasBreak = true;
         break;
@@ -219,12 +230,6 @@ export default function App() {
     console.log("from app studentsHashTable=");
     studentsHashTable.print();
   }, [studentsHashTable]);
-
-  // useEffect(() => {
-  //   if (studentsDNDContentRejected) {
-  //     setStudentsHashTable(new HashTable(INITIAL_HASH_SIZE));
-  //   }
-  // }, [studentsDNDContentRejected]);
 
   useEffect(() => {
     if (gradesDNDContentRejected) {
@@ -248,7 +253,8 @@ export default function App() {
               setPrevFileName={setStudentsPrevFileName}
               name="Ученики"
               setRawData={setStudentsRawData}
-              alertMessage="Для справочника Студенты каждая строка входного файла должна содержать: ФИО;Класс;Дата рождения"
+              alertName="read_file_error"
+              toggleAlert={toggleAlert}
               validateFile={validateStudentsFile}
               contentRejected={studentsDNDContentRejected}
               setContentRejected={setStudentsDNDContentRejected}
@@ -262,7 +268,8 @@ export default function App() {
               setPrevFileName={setGradesPrevFileName}
               name="Оценки"
               setRawData={setGradesRawData}
-              alertMessage="Для справочника Оценки каждая строка входного файла должна содержать: ФИО;Предмет;Оценка;Дата"
+              alertName="read_file_error"
+              toggleAlert={toggleAlert}
               validateFile={(text: string) => true}
               contentRejected={gradesDNDContentRejected}
               setContentRejected={setGradesDNDContentRejected}
@@ -327,15 +334,6 @@ export default function App() {
           <AddIcon />
         </Fab>
 
-        {/* <AddRecordForm
-          isAddFormOpen={isAddFormOpen}
-          handleClose={handleAddFormClose}
-          handleNewStudentSubmit={handleNewStudentSubmit}
-          handleNewGradeSubmit={handleNewGradeSubmit}
-          setNewRecordType={setNewRecordType}
-          newRecordType={newRecordType}
-        /> */}
-
         {/* Форма для добавления записи */}
         <MyForm
           formTitle="Добавить запись"
@@ -373,6 +371,25 @@ export default function App() {
           setRecordType={setRemoveRecordType}
           recordType={removeRecordType}
         />
+
+        {/* alerts */}
+        {alerts.map((al, index) => (
+          <MyAlert
+            key={index}
+            title={al.title}
+            message={al.message}
+            open={al.open}
+            onClose={() =>
+              setAlerts((prevAlerts) =>
+                prevAlerts.map((alert_item) =>
+                  alert_item.name === al.name
+                    ? { ...alert_item, open: false }
+                    : alert_item
+                )
+              )
+            }
+          />
+        ))}
       </div>
     </>
   );

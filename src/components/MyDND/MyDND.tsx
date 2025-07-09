@@ -13,7 +13,8 @@ import { MyDNDProps } from "../../util";
 export default function MyDND({
   name,
   setRawData,
-  alertMessage,
+  toggleAlert,
+  alertName,
   validateFile,
   contentRejected,
   setContentRejected,
@@ -30,7 +31,7 @@ export default function MyDND({
       .then((text) => {
         // разбиваем по переводу строки (поддерживает Windows/Mac/Linux)
         if (!validateFile(text)) {
-          setTimeout(() => alert(alertMessage), 0);
+          toggleAlert(alertName);
           setContentRejected(true);
         } else {
           setContentRejected(false);

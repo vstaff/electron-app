@@ -8,6 +8,41 @@ export interface Callback {
 }
 import HashTable from "./dsa/hash_table/HashTable";
 
+// alerts
+export interface alert_object {
+  name: string;
+  title: string;
+  message: string;
+  open: boolean;
+}
+
+export const initialAlerts: alert_object[] = [
+    {
+      name: "read_file_error",
+      title: "Не получилось загрузить данные из файла",
+      message: "Проверьте корректность данных в файле",
+      open: false,
+    },
+    {
+      name: "insert_error",
+      title: "Не получилось добавить данные в справочник",
+      message: "Проверьте корректность вводимых данных",
+      open: false,
+    },
+    {
+      name: "search_error",
+      title: "Запись не найдена",
+      message: "Указанной записи не существует в указанном справочнике",
+      open: false,
+    },
+    {
+      name: "delete_error",
+      title: "Не получилось удалить запись",
+      message: "Указанной записи не существует в указанном справочнике",
+      open: false,
+    },
+  ]
+
 // <validation>
 export const validateStudentsFile = (text: string): boolean => {
   const arr = text.trim().split(/\r?\n/);
@@ -72,7 +107,8 @@ export interface MyFormProps {
 export interface MyDNDProps {
   name: string;
   setRawData: React.Dispatch<React.SetStateAction<string[]>>;
-  alertMessage: string;
+  toggleAlert: (name: string) => void,
+  alertName: string,
   validateFile: (text: string) => boolean;
   contentRejected: boolean;
   setContentRejected: React.Dispatch<React.SetStateAction<boolean>>;
