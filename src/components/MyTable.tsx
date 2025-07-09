@@ -6,9 +6,9 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import "./MyTable.css";
-import MyContextMenuStrip from "../MyContextMenuStrip/MyContextMenuStrip";
-import { MyTableProps, } from "../../util";
+import "./styles/MyTable.css";
+import MyContextMenuStrip from "./MyContextMenuStrip";
+import { MyTableProps, } from "../util";
 
 export default function MyTable({
   tableFor,
@@ -16,7 +16,26 @@ export default function MyTable({
   tableHeadCallbacks,
   tableContent,
   highlightRow,
+  removedRows
 }: MyTableProps) {
+  const getRowStyle = (rowIndex: number) => {
+    let style: React.CSSProperties = {};
+    
+    // Стиль для подсвеченной строки (найденная запись)
+    if (highlightRow === rowIndex) {
+      style.backgroundColor = "lightgray";
+      style.transition = "background-color 0.5s ease";
+    }
+    
+    // Стиль для удаленной строки
+    if (removedRows?.includes(rowIndex)) {
+      style.backgroundColor = "#ffebee"; // светло-красный
+      style.opacity = 0.7;
+      style.textDecoration = "line-through";
+    }
+    
+    return style;
+  };
   return (
     <MyContextMenuStrip
       callbacks={tableHeadCallbacks}
@@ -45,18 +64,11 @@ export default function MyTable({
             <TableBody>
               {tableContent?.map((content, cidx) => (
                 <TableRow
-                  key={cidx}
+                  key={`${tableFor}-row-${cidx}-${Date.now()}`}
                   className={`${tableFor}-row`}
                   id={`${tableFor}-row-${cidx}`}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  style={
-                    highlightRow === cidx
-                      ? {
-                          backgroundColor: "lightgray",
-                          transition: "background-color 0.5s ease",
-                        }
-                      : {}
-                  }
+                  style={getRowStyle(cidx)}
                 >
                   {content.map((item, idx) => (
                     <TableCell key={idx} align="left">

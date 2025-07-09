@@ -1,0 +1,28 @@
+/* Добавь эти стили в твой CSS файл */
+
+
+/* Стиль для удаляемых строк */
+.students-row.removed,
+.grades-row.removed {
+  background-color: #ffebee !important; /* светло-красный */
+  opacity: 0.7;
+  text-decoration: line-through;
+  transition: all 0.3s ease;
+}
+
+/* Анимация для удаления */
+.students-row.removing,
+.grades-row.removing {
+  background-color: #ffcdd2 !important; /* красный */
+  opacity: 0.5;
+  transform: scale(0.98);
+  transition: all 0.5s ease;
+}
+
+/* Стиль для подсвеченных строк (найденные записи) */
+.students-row.highlighted,
+.grades-row.highlighted {
+  background-color: #e3f2fd !important; /* светло-синий */
+  border-left: 4px solid #2196f3;
+  transition: background-color 0.5s ease;
+}

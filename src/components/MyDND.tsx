@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
 // styles
-import "./MyDND.css";
+import "./styles/MyDND.css";
 
 // <icons>
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import DescriptionIcon from "@mui/icons-material/Description";
 // </icons>
 
-import { MyDNDProps } from "../../util";
+import { MyDNDProps } from "../util";
 
 export default function MyDND({
   name,

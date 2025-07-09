@@ -1,7 +1,7 @@
-import React, { cloneElement, ReactElement, MouseEvent, useState } from "react";
+import React, { cloneElement, MouseEvent, useState } from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import { MyContextMenuStripProps } from "../../util";
+import { MyContextMenuStripProps } from "../util";
 
 export default function MyContextMenuStrip({
   callbacks,

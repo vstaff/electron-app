@@ -90,6 +90,7 @@ export interface MyTableProps {
   tableHead: string[];
   tableContent?: string[][];
   tableHeadCallbacks: Callback[],
+  removedRows?: number[]
 }
 
 export interface MyFormProps {

@@ -18,7 +18,7 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DialogActions } from "@mui/material";
-import { MyFormProps } from "../../util";
+import { MyFormProps } from "../util";
 
 export default function MyForm({
   keyOnly,

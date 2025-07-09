@@ -10,8 +10,8 @@ import { useState } from "react";
 // </hooks>
 
 // <my_components>
-import MyDND from "./components/MyDND/MyDND";
-import MyTable from "./components/MyTable/MyTable";
+import MyDND from "./components/MyDND";
+import MyTable from "./components/MyTable";
 // </my_components>
 
 // <mui>
@@ -35,8 +35,8 @@ import {
   alert_object,
   initialAlerts,
 } from "./util";
-import MyForm from "./components/MyForm/MyForm";
-import MyAlert from "./components/MyAlert/MyAlert";
+import MyForm from "./components/MyForm";
+import MyAlert from "./components/MyAlert";
 
 export default function App() {
   const [alerts, setAlerts] = useState<alert_object[]>(initialAlerts);
@@ -47,7 +47,11 @@ export default function App() {
       )
     );
 
-  const [highlightIdx, setHighlightIdx] = useState<number | null>(null); // Для подсветки найденной строки
+  // const [highlightIdx, setHighlightIdx] = useState<number | null>(null); // Для подсветки найденной строки/
+  const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
+  const [removedStudentRows, setRemovedStudentRows] = useState<number[]>([]); // новое состояние
+  const [removedGradeRows, setRemovedGradeRows] = useState<number[]>([]); // новое состояние
+
 
   // <catalogs_data>
   const [studentsRawData, setStudentsRawData] = useState<string[]>([]);
@@ -153,6 +157,13 @@ export default function App() {
   const [removeRecordType, setRemoveRecordType] = useState<"student" | "grade">(
     "student"
   );
+
+  const clearRemovedRows = () => {
+    console.log("Очищаем все удаленные строки");
+    setRemovedStudentRows([]);
+    setRemovedGradeRows([]);
+  };
+
   const handleRemoveStudentSubmit = (
     event: React.FormEvent<HTMLFormElement>
   ) => {
@@ -168,17 +179,27 @@ export default function App() {
         correctDate(formJSON["student-birth-date"])
       );
 
-      const idx = studentsHashTable.search(key); // что делать дальше хз
-      if (Object.is(idx, null)) {
+      const idx = studentsHashTable.search(key);
+      if (idx === null) {
         toggleAlert("delete_error");
       } else {
         handleRemoveFormClose();
-        const row = document.getElementById(`students-row-${idx}`);
-        row && row.classList.add("removed");
+        
+        // Добавляем индекс в список удаленных строк
+        setRemovedStudentRows(prev => {
+          if (!prev.includes(idx)) {
+            return [...prev, idx];
+          }
+          return prev;
+        });
+        
+        // Фактически удаляем из хеш-таблицы сразу
         setStudentsHashTable((prevStudentsHashTable) => {
           prevStudentsHashTable.remove(key);
           return prevStudentsHashTable;
         });
+
+        console.log("Строка помечена как удаленная:", idx);
       }
     } catch (err) {
       toggleAlert("delete_error");
@@ -203,6 +224,10 @@ export default function App() {
   // <effects>
   useEffect(() => {
     console.log("from app studentsRawData=", studentsRawData);
+    
+    // Очищаем все помеченные как удаленные строки при загрузке новых данных
+    clearRemovedRows();
+    
     if (studentsRawData.length === 0) return;
 
     const newHashTable = new HashTable(studentsRawData.length);
@@ -230,6 +255,11 @@ export default function App() {
     console.log("from app studentsHashTable=");
     studentsHashTable.print();
   }, [studentsHashTable]);
+
+  // Добавляем useEffect для отслеживания удаленных строк
+  useEffect(() => {
+    console.log("Removed student rows:", removedStudentRows);
+  }, [removedStudentRows]);
 
   useEffect(() => {
     if (gradesDNDContentRejected) {
@@ -282,6 +312,7 @@ export default function App() {
           <MyTable
             tableFor="students"
             highlightRow={highlightIdx}
+            removedRows={removedStudentRows}
             tableHead={[
               "Статус",
               "Первичный хеш",
@@ -312,6 +343,13 @@ export default function App() {
               {
                 name: "Импортировать",
                 callback: () => console.log("импорт студентов"),
+              },
+              {
+                name: "Очистить удаленные",
+                callback: () => {
+                  console.log("Ручная очистка удаленных строк");
+                  setRemovedStudentRows([]);
+                },
               },
             ]}
           />
