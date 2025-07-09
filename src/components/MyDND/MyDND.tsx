@@ -21,27 +21,32 @@ export default function MyDND({
   prevFileName,
   setPrevFileName,
 }: MyDNDProps) {
-  // const [contentRejected, setContentRejected] = useState(false);
+  const [currentFileName, setCurrentFileName] = useState<string>("");
+
   const onDrop = useCallback((acceptedFiles: readonly FileWithPath[]) => {
-    if (acceptedFiles.length === 0) return; // по идее этого не должно случиться, но на всякий случай
+    if (acceptedFiles.length === 0) return;
     const file = acceptedFiles[0];
 
     file
       .text()
       .then((text) => {
-        // разбиваем по переводу строки (поддерживает Windows/Mac/Linux)
         if (!validateFile(text)) {
           toggleAlert(alertName);
           setContentRejected(true);
+          // НЕ обновляем prevFileName при ошибке валидации
         } else {
           setContentRejected(false);
           setRawData(text.trim().split(/\r?\n/));
+          // Обновляем prevFileName только при успешной валидации
+          setPrevFileName(file.name);
         }
+        // Сохраняем текущее имя файла для отображения
+        setCurrentFileName(file.name);
       })
       .catch((err) => {
         console.error("Ошибка чтения файла:", err);
       });
-  }, []);
+  }, [validateFile, toggleAlert, alertName, setContentRejected, setRawData, setPrevFileName]);
 
   const onDragEnter = () => {
     setContentRejected(false);
@@ -63,7 +68,8 @@ export default function MyDND({
       className="dropzone my-dnd-container open-sans-regular"
     >
       {(() => {
-        if (acceptedFiles.length == 0 && !prevFileName) {
+        if (!prevFileName && !currentFileName) {
+          // Нет файла вообще
           return (
             <>
               <AttachFileIcon />
@@ -71,24 +77,27 @@ export default function MyDND({
               <p className="text">Справочник {name} (только .txt)</p>
             </>
           );
-        } else if (acceptedFiles.length && !contentRejected) {
-          setPrevFileName(acceptedFiles[0].name);
+        } else if (contentRejected) {
+          // Файл отклонен - показываем предыдущий корректный или сообщение об ошибке
           return (
             <>
               <DescriptionIcon />
               <input {...getInputProps()} />
-              <p className="text">{acceptedFiles[0].name}</p>
+              <p className="text" style={{ color: "red" }}>
+                {prevFileName || "Файл отклонен"}
+              </p>
             </>
           );
-         } else {
+        } else {
+          // Файл принят - показываем текущий корректный файл
           return (
             <>
               <DescriptionIcon />
               <input {...getInputProps()} />
               <p className="text">{prevFileName}</p>
             </>
-          )
-         }
+          );
+        }
       })()}
     </section>
   );
