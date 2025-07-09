@@ -21,7 +21,7 @@ export const validateStudentsFile = (text: string): boolean => {
       Value.validate(classCode);
       Key.validateBirthDate(birthDate);
     } catch (err) {
-      alert(err);
+      setTimeout(() => alert(err), 0);
       return false;
     }
   }

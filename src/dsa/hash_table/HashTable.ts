@@ -165,17 +165,17 @@ export default class HashTable {
     return copy;
   }
 
-  replace(idx: number) {
-    if (this.nodes[idx].status === Status.FREE) {
-      alert("empty");
-      return;
-    }
+  // replace(idx: number) {
+  //   if (this.nodes[idx].status === Status.FREE) {
+  //     setTimeout();
+  //     return;
+  //   }
 
-    this.nodes[idx] = new HashNode({
-      ...this.nodes[idx],
-      key: new Key("Хуесос Пидорас Гандодн", "11 сен 2001"),
-      value: new Value("11Б"),
-    })
-    console.log("произошла замена!!!!")
-  }
+  //   this.nodes[idx] = new HashNode({
+  //     ...this.nodes[idx],
+  //     key: new Key("Хуесос Пидорас Гандодн", "11 сен 2001"),
+  //     value: new Value("11Б"),
+  //   })
+  //   console.log("произошла замена!!!!")
+  // }
 }

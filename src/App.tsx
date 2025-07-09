@@ -82,7 +82,7 @@ export default function App() {
         return prevStudentsHashTable;
       });
     } catch (err) {
-      alert(`Не получилось добавить запись для Справочника Студенты`);
+      setTimeout(() => alert(`Не получилось добавить запись для Справочника Студенты`), 0);
     }
     handleAddFormClose();
   };
@@ -112,7 +112,7 @@ export default function App() {
 
       const idx = studentsHashTable.search(key); // что делать дальше хз
       if (Object.is(idx, null)) {
-        alert("Нет такой записи");
+        setTimeout(() => alert("Нет такой записи"), 0);
       } else {
         handleFindRecordFormClose();
         const row = document.getElementById(`students-row-${idx}`);
@@ -128,7 +128,7 @@ export default function App() {
         setTimeout(() => setHighlightIdx(null), 2000);
       }
     } catch (err) {
-      alert(`Не получилось найти указанную запись`);
+      setTimeout(() => alert(`Не получилось найти указанную запись`), 0);
     }
     handleFindRecordFormClose();
   };
@@ -159,7 +159,7 @@ export default function App() {
 
       const idx = studentsHashTable.search(key); // что делать дальше хз
       if (Object.is(idx, null)) {
-        alert("Нет такой записи");
+        setTimeout(() => alert("Нет такой записи"), 0);
       } else {
         handleRemoveFormClose();
         const row = document.getElementById(`students-row-${idx}`);
@@ -170,7 +170,7 @@ export default function App() {
         });
       }
     } catch (err) {
-      alert(`Не получилось найти указанную запись`);
+      setTimeout(() => alert(`Не получилось удалить указанную запись`), 0);
     }
     handleRemoveFormClose();
   };
@@ -203,7 +203,7 @@ export default function App() {
         const value = new Value(classCode);
         newHashTable.insert(key, value);
       } catch (err) {
-        alert("Не получилось загрузить данные из файла");
+        setTimeout(() => alert("Не получилось загрузить данные из файла"), 0);
         setStudentsDNDContentRejected(true);
         wasBreak = true;
         break;

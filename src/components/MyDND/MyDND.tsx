@@ -30,7 +30,7 @@ export default function MyDND({
       .then((text) => {
         // разбиваем по переводу строки (поддерживает Windows/Mac/Linux)
         if (!validateFile(text)) {
-          alert(alertMessage);
+          setTimeout(() => alert(alertMessage), 0);
           setContentRejected(true);
         } else {
           setContentRejected(false);
