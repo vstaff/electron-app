@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import "../styles/global.css"
+import "../styles/global.css";
 import "../styles/App.css";
 import { useState } from "react";
 import MyDND from "./MyDND";
@@ -27,12 +27,18 @@ export default function StudentsSection() {
   const [alerts, setAlerts] = useState<alert_object[]>(initialAlerts);
   const toggleAlert = (name: string) =>
     setAlerts((prevAlerts) =>
-      prevAlerts.map((al) =>
-        al.name === name ? { ...al, open: !al.open } : al
-      )
+      prevAlerts.map((al) => {
+        if (al.name === name) {
+          console.log(`toggling ${name}`);
+          return { ...al, open: !al.open };
+        }
+        return al;
+      })
     );
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
-  const [removedStudentRows, setRemovedStudentRows] = useState<number[]>([]); // новое состояние
+
+  // Используем только removedStudentKeys (убираем removedStudentRows)
+  const [removedStudentKeys, setRemovedStudentKeys] = useState<string[]>([]);
 
   // <catalogs_data>
   const [studentsRawData, setStudentsRawData] = useState<string[]>([]);
@@ -42,12 +48,40 @@ export default function StudentsSection() {
   );
   // </catalogs_data>
 
+  // Функция для создания уникального ключа записи
+  const createRecordKey = (name: string, birthDate: string): string => {
+    return `${name}|${birthDate}`;
+  };
+
+  // Функция для проверки, удалена ли запись
+  const isRecordRemoved = (rowIndex: number): boolean => {
+    const tableData = makeHTRaw(studentsHashTable);
+    if (rowIndex >= tableData.length) return false;
+
+    const row = tableData[rowIndex];
+    // Проверяем статус: если 2 (REMOVED) - значит удалена
+    if (row[1] === "2") return true;
+
+    // Если статус 1 (OCCUPIED), проверяем по ключу
+    if (row[1] === "1") {
+      const name = row[4]; // ФИО
+      const birthDate = row[6]; // Дата рождения
+      if (name !== "_" && birthDate !== "_") {
+        const recordKey = createRecordKey(name, birthDate);
+        return removedStudentKeys.includes(recordKey);
+      }
+    }
+
+    return false;
+  };
+
   // <form>
   // <insert>
   const [isAddStudentFormOpen, setIsAddStudentFormOpen] = useState(false);
   const handleAddStudentFormClose = () => {
     setIsAddStudentFormOpen(false);
   };
+
   const handleNewStudentSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -58,41 +92,39 @@ export default function StudentsSection() {
     try {
       const key = new Key(
         formJSON["student-name"],
-        correctDate(formJSON["student-birth-date"])
+        correctDate(formJSON["student-birth-date"]!)
       );
       const value = new Value(
-        `${formJSON["student-class-number"].replace('"', "")}${
+        formJSON["student-class-number"].replace('"', "") +
           formJSON["student-class-letter"]
-        }`
       );
 
-      setStudentsHashTable((prevStudentsHashTable) => {
-        const copy = prevStudentsHashTable.clone();
-        const insertResult = copy.insert(key, value);
+      // Клонируем текущую хеш-таблицу и пробуем вставить
+      const copy = studentsHashTable.clone();
+      const insertResult = copy.insert(key, value);
 
-        if (insertResult) {
-          console.log("Запись успешно добавлена");
-          
-          // Находим индекс новой записи и убираем его из removedRows
-          const newRecordIndex = copy.search(key);
-          if (newRecordIndex !== null) {
-            setRemovedStudentRows((prevRemovedRows) => {
-              // Убираем индекс из списка удаленных, если он там был
-              const filteredRows = prevRemovedRows.filter(idx => idx !== newRecordIndex);
-              console.log(`Убираем индекс ${newRecordIndex} из списка удаленных строк`);
-              return filteredRows;
-            });
-          }
-          return copy;
-        }
-        toggleAlert("duplicate_error")
-        return prevStudentsHashTable;
-      });
+      if (!insertResult) {
+        console.log("DUPLICATE");
+        toggleAlert("duplicate_error");        // Показываем окно об ошибке дубликата
+        return;                                // Не закрываем форму
+      }
+
+      // Успешная вставка
+      console.log("Запись успешно добавлена");
+      setStudentsHashTable(copy);
+
+      // Убираем ключ из списка удалённых (если был)
+      const recordKey = createRecordKey(key.name, key.birthDate);
+      setRemovedStudentKeys((prev) => prev.filter((k) => k !== recordKey));
+
+      // Закрываем форму только после успеха
+      handleAddStudentFormClose();
     } catch (err) {
-      toggleAlert("insert_error");
+      console.error(err);
+      toggleAlert("insert_error");              // Если не прошли валидацию
     }
-    handleAddStudentFormClose();
   };
+
   // </insert>
 
   // <find>
@@ -113,14 +145,14 @@ export default function StudentsSection() {
         correctDate(formJSON["student-birth-date"])
       );
 
-      const idx = studentsHashTable.search(key); // что делать дальше хз
+      const idx = studentsHashTable.search(key);
       if (Object.is(idx, null)) {
         toggleAlert("search_error");
       } else {
         handleFindStudentFormClose();
         const row = document.getElementById(`students-row-${idx}`);
         if (row) {
-          console.log("handleNewStudentSubmit; вот строка ", row);
+          console.log("handleFindStudentSubmit; вот строка ", row);
           row.scrollIntoView({
             behavior: "smooth",
             block: "center",
@@ -136,6 +168,7 @@ export default function StudentsSection() {
     handleFindStudentFormClose();
   };
   // </find>
+
   // <remove>
   const [isRemoveStudentFormOpen, setIsRemoveStudentFormOpen] = useState(false);
   const handleRemoveStudentFormClose = () => {
@@ -143,8 +176,8 @@ export default function StudentsSection() {
   };
 
   const clearStudentsRemovedRows = () => {
-    console.log("Очищаем все удаленные строки");
-    setRemovedStudentRows([]);
+    console.log("Очищаем все удаленные записи");
+    setRemovedStudentKeys([]);
   };
 
   const handleRemoveStudentSubmit = (
@@ -168,22 +201,23 @@ export default function StudentsSection() {
       } else {
         handleRemoveStudentFormClose();
 
-        // Добавляем индекс в список удаленных строк
-        setRemovedStudentRows((prev) => {
-          if (!prev.includes(idx)) {
-            return [...prev, idx];
+        // Добавляем ключ записи в список удаленных
+        const recordKey = createRecordKey(key.name, key.birthDate);
+        setRemovedStudentKeys((prev) => {
+          if (!prev.includes(recordKey)) {
+            return [...prev, recordKey];
           }
           return prev;
         });
 
-        // Фактически удаляем из хеш-таблицы сразу
+        // Фактически удаляем из хеш-таблицы
         setStudentsHashTable((prevStudentsHashTable) => {
-          const copy = prevStudentsHashTable.clone(); // Новый объект
+          const copy = prevStudentsHashTable.clone();
           const removeResult = copy.remove(key);
           return removeResult ? copy : prevStudentsHashTable;
         });
 
-        console.log("Строка помечена как удаленная:", idx);
+        console.log("Запись помечена как удаленная:", recordKey);
       }
     } catch (err) {
       toggleAlert("delete_error");
@@ -234,11 +268,12 @@ export default function StudentsSection() {
     studentsHashTable.print();
   }, [studentsHashTable]);
 
-  // Добавляем useEffect для отслеживания удаленных строк
+  // Добавляем useEffect для отслеживания удаленных ключей
   useEffect(() => {
-    console.log("Removed student rows:", removedStudentRows);
-  }, [removedStudentRows]);
+    console.log("Removed student keys:", removedStudentKeys);
+  }, [removedStudentKeys]);
   // </effects>
+
   return (
     <>
       <div className="open-sans-regular app-section" id="students-section">
@@ -269,7 +304,7 @@ export default function StudentsSection() {
           <MyTable
             tableFor="students"
             highlightRow={highlightIdx}
-            removedRows={removedStudentRows}
+            isRowRemoved={isRecordRemoved} // Используем новую функцию
             tableHead={[
               "Статус",
               "Первичный хеш",
@@ -284,7 +319,6 @@ export default function StudentsSection() {
                 name: "Найти",
                 callback: () => setIsFindStudentFormOpen(true),
               },
-
               {
                 name: "Добавить",
                 callback: () => setIsAddStudentFormOpen(true),
@@ -304,8 +338,8 @@ export default function StudentsSection() {
               {
                 name: "Очистить удаленные",
                 callback: () => {
-                  console.log("Ручная очистка удаленных строк");
-                  setRemovedStudentRows([]);
+                  console.log("Ручная очистка удаленных записей");
+                  setRemovedStudentKeys([]); // Очищаем ключи
                 },
               },
             ]}
@@ -322,7 +356,6 @@ export default function StudentsSection() {
           children={
             <>
               <TextField
-                // autoFocus
                 required
                 margin="dense"
                 id="student-name"
@@ -354,7 +387,7 @@ export default function StudentsSection() {
                 name="student-class-letter"
                 id="student-class-letter"
                 label="Параллель"
-                // value={"А"}
+                defaultValue="А"
               >
                 <MenuItem value={"А"}>А</MenuItem>
                 <MenuItem value={"Б"}>Б</MenuItem>
@@ -391,7 +424,6 @@ export default function StudentsSection() {
           children={
             <>
               <TextField
-                // autoFocus
                 required
                 margin="dense"
                 id="student-name"
@@ -431,7 +463,6 @@ export default function StudentsSection() {
           children={
             <>
               <TextField
-                // autoFocus
                 required
                 margin="dense"
                 id="student-name"
@@ -462,23 +493,25 @@ export default function StudentsSection() {
         />
 
         {/* alerts */}
-        {alerts.map((al, index) => (
-          <MyAlert
-            key={index}
-            title={al.title}
-            message={al.message}
-            open={al.open}
-            onClose={() =>
-              setAlerts((prevAlerts) =>
-                prevAlerts.map((alert_item) =>
-                  alert_item.name === al.name
-                    ? { ...alert_item, open: false }
-                    : alert_item
+        {alerts.map((al, index) => {
+          return (
+            <MyAlert
+              key={index}
+              title={al.title}
+              message={al.message}
+              open={al.open}
+              onClose={() =>
+                setAlerts((prevAlerts) =>
+                  prevAlerts.map((alert_item) =>
+                    alert_item.name === al.name
+                      ? { ...alert_item, open: false }
+                      : alert_item
+                  )
                 )
-              )
-            }
-          />
-        ))}
+              }
+            />
+          );
+        })}
       </div>
     </>
   );

@@ -3,169 +3,352 @@ import Key from "./Key";
 import Value from "./Value";
 import { Status } from "../../util";
 
-
 export default class HashTable {
   private size: number;
-  private k: number;
+  private step: number; // Шаг для линейного пробирования
   private nodes: HashNode[];
-  private spaceLeft: number;
+  private occupiedCount: number; // Количество OCCUPIED записей
+  private removedCount: number;  // Количество REMOVED записей
 
   constructor(initialSize: number) {
-    this.size = initialSize;
-    this.k = this.getMinPrime(this.size);
-    this.spaceLeft = this.size;
+    this.size = Math.max(initialSize, 3); // Минимум 3 для корректной работы
+    this.step = this.calculateStep(this.size);
     this.nodes = Array.from({ length: this.size }, () => new HashNode({}));
+    this.occupiedCount = 0;
+    this.removedCount = 0;
+    
+    console.log(`Создана хеш-таблица: размер=${this.size}, шаг=${this.step}`);
   }
 
   getNodes(): readonly HashNode[] {
     return this.nodes;
   }
 
-  private getMinPrime(n: number): number {
-    if (n <= 1) return 1;
+  getSize(): number {
+    return this.size;
+  }
+
+  getOccupiedCount(): number {
+    return this.occupiedCount;
+  }
+
+  // Вычисляем шаг для линейного пробирования (взаимно простой с размером)
+  private calculateStep(tableSize: number): number {
     const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
-    for (let i = 2; i < n; i++) {
-      if (gcd(n, i) === 1) return i;
-    }
-    return 1;
-  }
-
-  private getInitialHash(key: Key): number {
-    let hash = 0;
-    for (const c of key.name) hash += c.charCodeAt(0);
-    console.log(`from getInitialHash ${key.birthDate}`);
-    hash += parseInt(key.birthDate.replace(/\D/g, ''), 10);
-    hash = hash * hash;
-    const hashStr = hash.toString();
-    const doubled = hashStr + hashStr;
-    const len = doubled.length;
-    const substrLen = len % 2 === 0 ? 2 : 3;
-    const start = Math.floor(len / 2) - (substrLen === 2 ? 0 : 1);
-    const mid = doubled.substr(start, substrLen);
-    return parseInt(mid, 10) % this.size;
-  }
-
-  private getSecondaryHash(initialHash: number, i: number): number {
-    return (initialHash + i * this.k) % this.size;
-  }
-
-  insert(key: Key, value: Value): boolean {
-    const initialHash = this.getInitialHash(key);
-    let idx = initialHash;
-    let i = 1;
-    let firstRemoved: number | null = null;
-
-    while (this.nodes[idx].status !== Status.FREE) {
-      if (this.isKeyAt(key, idx)) return false;
-      if (this.nodes[idx].status === Status.REMOVED && firstRemoved === null) {
-        firstRemoved = idx;
+    
+    // Ищем наименьшее число > 1, взаимно простое с размером таблицы
+    for (let step = 2; step < tableSize; step++) {
+      if (gcd(tableSize, step) === 1) {
+        return step;
       }
-      idx = this.getSecondaryHash(initialHash, i++);
     }
+    return 1; // Fallback
+  }
 
-    const insertPos = firstRemoved !== null ? firstRemoved : idx;
-    // this.nodes[insertPos] = new HashNode(key, value, Status.OCCUPIED);
-    this.nodes[insertPos] = new HashNode({ key, value, initialHash, secondaryHash: insertPos, status: Status.OCCUPIED, });
-    this.spaceLeft--;
-
-    if (this.spaceLeft <= this.size * 0.3) {
-      this.resize(this.size * 2);
+  // Метод середины квадрата для первичного хеширования
+  private hash(key: Key): number {
+    let hashValue = 0;
+    
+    // Суммируем коды символов имени
+    for (const char of key.name) {
+      hashValue += char.charCodeAt(0);
     }
+    
+    // Добавляем числовое значение даты рождения
+    const dateNumber = parseInt(key.birthDate.replace(/\D/g, ''), 10);
+    hashValue += dateNumber;
+    
+    // Метод середины квадрата
+    const squared = hashValue * hashValue;
+    const squaredStr = squared.toString();
+    
+    // Удваиваем строку для стабильности
+    const doubled = squaredStr + squaredStr;
+    const length = doubled.length;
+    
+    // Выбираем середину
+    const middleLength = length % 2 === 0 ? 2 : 3;
+    const startPos = Math.floor(length / 2) - Math.floor(middleLength / 2);
+    const middleDigits = doubled.substring(startPos, startPos + middleLength);
+    
+    const finalHash = parseInt(middleDigits, 10) % this.size;
+    
+    console.log(`hash(${key.name}): ${hashValue} -> ${squared} -> ${middleDigits} -> ${finalHash}`);
+    return finalHash;
+  }
+
+  // Линейное пробирование
+  private probe(initialHash: number, attempt: number): number {
+    return (initialHash + attempt * this.step) % this.size;
+  }
+
+  // Проверка, совпадает ли ключ в данной позиции
+  private keyMatches(position: number, key: Key): boolean {
+    const node = this.nodes[position];
+    return node.key !== undefined && 
+           node.key.name === key.name && 
+           node.key.birthDate === key.birthDate;
+  }
+
+  // Поиск позиции ключа (для поиска и удаления)
+  private findPosition(key: Key): { found: boolean; position: number; attempts: number } {
+    const initialHash = this.hash(key);
+    let attempts = 0;
+    
+    while (attempts < this.size) {
+      const position = this.probe(initialHash, attempts);
+      const node = this.nodes[position];
+      
+      // Если нашли точное совпадение в статусе OCCUPIED
+      if (node.status === Status.OCCUPIED && this.keyMatches(position, key)) {
+        return { found: true, position, attempts: attempts + 1 };
+      }
+      
+      // Если дошли до свободной ячейки - ключа нет
+      if (node.status === Status.FREE) {
+        return { found: false, position, attempts: attempts + 1 };
+      }
+      
+      attempts++;
+    }
+    
+    // Таблица полностью заполнена
+    return { found: false, position: -1, attempts };
+  }
+
+  // Поиск позиции для вставки
+  private findInsertPosition(key: Key): { position: number; attempts: number } {
+    const initialHash = this.hash(key);
+    let attempts = 0;
+    let firstRemovedPos = -1;
+    
+    while (attempts < this.size) {
+      const position = this.probe(initialHash, attempts);
+      const node = this.nodes[position];
+      
+      // Если ключ уже существует
+      if (node.status === Status.OCCUPIED && this.keyMatches(position, key)) {
+        return { position: -1, attempts: attempts + 1 }; // Дубликат
+      }
+      
+      // Запоминаем первую REMOVED позицию
+      if (node.status === Status.REMOVED && firstRemovedPos === -1) {
+        firstRemovedPos = position;
+      }
+      
+      // Если нашли свободную позицию
+      if (node.status === Status.FREE) {
+        const finalPos = firstRemovedPos !== -1 ? firstRemovedPos : position;
+        return { position: finalPos, attempts: attempts + 1 };
+      }
+      
+      attempts++;
+    }
+    
+    // Если есть REMOVED позиция, используем её
+    if (firstRemovedPos !== -1) {
+      return { position: firstRemovedPos, attempts };
+    }
+    
+    return { position: -1, attempts }; // Таблица полна
+  }
+
+  // Проверка необходимости увеличения размера
+  private needsGrowth(): boolean {
+    const loadFactor = (this.occupiedCount + this.removedCount) / this.size;
+    return loadFactor > 0.7;
+  }
+
+  // Проверка необходимости уменьшения размера
+  private needsShrinking(): boolean {
+    const loadFactor = this.occupiedCount / this.size;
+    return this.size > 3 && loadFactor < 0.2 && this.removedCount > this.occupiedCount;
+  }
+
+  // Увеличение размера таблицы
+  private grow(): void {
+    console.log(`Увеличиваем размер с ${this.size} до ${this.size * 2}`);
+    this.resize(this.size * 2);
+  }
+
+  // Уменьшение размера таблицы
+  private shrink(): void {
+    const newSize = Math.max(Math.ceil(this.size / 2), 3);
+    console.log(`Уменьшаем размер с ${this.size} до ${newSize}`);
+    this.resize(newSize);
+  }
+
+  // Перестроение таблицы с новым размером
+  private resize(newSize: number): void {
+    const oldNodes = this.nodes;
+    const oldSize = this.size;
+    
+    // Собираем все активные записи
+    const activeItems: { key: Key; value: Value }[] = [];
+    for (const node of oldNodes) {
+      if (node.status === Status.OCCUPIED && node.key && node.value) {
+        activeItems.push({ key: node.key, value: node.value });
+      }
+    }
+    
+    // Создаем новую таблицу
+    this.size = newSize;
+    this.step = this.calculateStep(this.size);
+    this.nodes = Array.from({ length: this.size }, () => new HashNode({}));
+    this.occupiedCount = 0;
+    this.removedCount = 0;
+    
+    // Вставляем все активные записи
+    for (const { key, value } of activeItems) {
+      this.insertInternal(key, value); // Внутренняя вставка без проверок
+    }
+    
+    console.log(`Resize завершен: ${oldSize} -> ${this.size}, записей: ${this.occupiedCount}`);
+  }
+
+  // Внутренняя вставка (без resize и проверок дубликатов)
+  private insertInternal(key: Key, value: Value): boolean {
+    const result = this.findInsertPosition(key);
+    
+    if (result.position === -1) {
+      return false; // Не удалось найти место
+    }
+    
+    const wasRemoved = this.nodes[result.position].status === Status.REMOVED;
+    
+    this.nodes[result.position] = new HashNode({
+      key,
+      value,
+      status: Status.OCCUPIED,
+      initialHash: this.hash(key),
+      secondaryHash: result.position
+    });
+    
+    this.occupiedCount++;
+    if (wasRemoved) {
+      this.removedCount--;
+    }
+    
     return true;
   }
 
-  remove(key: Key): boolean {
-    let initialHash = this.getInitialHash(key);
-    let idx = initialHash;
-    let i = 1;
-
-    while (this.nodes[idx].status !== Status.FREE) {
-      if (this.isKeyAt(key, idx, Status.REMOVED)) break;
-      if (this.isKeyAt(key, idx)) {
-        this.nodes[idx].status = Status.REMOVED;
-        this.spaceLeft++;
-        if (this.spaceLeft >= this.size * 0.7 && this.size > 1) {
-          const nonEmptyCount = this.nodes.reduce((count, node) => node.status !== Status.FREE ? count + 1 : count, 0);
-          const desireSize = Math.ceil(this.size * 0.8);
-          const finalSize = Math.max(Math.ceil(nonEmptyCount * 1.1), desireSize);
-          this.resize(finalSize);
-        }
-        console.log("удаление завершено true");
-        return true;
-      }
-      idx = this.getSecondaryHash(initialHash, i++);
+  // Публичная вставка
+  insert(key: Key, value: Value): boolean {
+    // Проверяем, нужно ли увеличить размер
+    if (this.needsGrowth()) {
+      this.grow();
     }
-    console.log("удаление завершено false")
-    return false;
+    
+    const result = this.findInsertPosition(key);
+    
+    if (result.position === -1) {
+      console.log(`Не удалось вставить ${key.name}: дубликат или таблица полна`);
+      return false;
+    }
+    
+    const wasRemoved = this.nodes[result.position].status === Status.REMOVED;
+    
+    this.nodes[result.position] = new HashNode({
+      key,
+      value,
+      status: Status.OCCUPIED,
+      initialHash: this.hash(key),
+      secondaryHash: result.position
+    });
+    
+    this.occupiedCount++;
+    if (wasRemoved) {
+      this.removedCount--;
+    }
+    
+    console.log(`Вставлен ${key.name} в позицию ${result.position} за ${result.attempts} попыток`);
+    return true;
   }
 
+  // Поиск ключа
   search(key: Key): number | null {
-    let initialHash = this.getInitialHash(key);
-    let idx = initialHash;
-    let i = 1;
-
-    while (this.nodes[idx].status !== Status.FREE) {
-      if (this.isKeyAt(key, idx)) return idx;
-      idx = this.getSecondaryHash(initialHash, i++);
-    }
-    return null;
-  }
-
-  private isKeyAt(key: Key, idx: number, expectedStatus: Status = Status.OCCUPIED): boolean {
-    const node = this.nodes[idx];
-    return node.key !== undefined && node.status === expectedStatus && node.key.name === key.name && node.key.birthDate === key.birthDate;
-  }
-
-  resize(newSize: number): void {
-    const oldNodes = this.nodes;
-    const items: { key: Key; value?: Value, status?: Status, initialHash?: number, secondaryHash?: number, }[] = [];
-    for (const node of oldNodes) {
-      if (node.status !== Status.FREE && node.key !== undefined && node.value !== undefined) {
-        items.push({ key: node.key, value: node.value, status: node.status, initialHash: node.initialHash, secondaryHash: node.secondaryHash, });
-        if (newSize < oldNodes.length && items.length >= newSize) break;
-      }
-    }
-
-    this.size = newSize;
-    this.k = this.getMinPrime(this.size);
-    this.spaceLeft = this.size - items.length;
-    this.nodes = Array.from({ length: this.size }, () => new HashNode({}));
-
-    for (const { key, value, status, } of items) {
-      const initialHash = this.getInitialHash(key);
-      let idx = initialHash;
-      let i = 1;
-      while (this.nodes[idx].status !== Status.FREE) {
-        idx = this.getSecondaryHash(this.getInitialHash(key), i++);
-      }
-      this.nodes[idx] = new HashNode({ key, value, initialHash, secondaryHash: idx, status, });
+    const result = this.findPosition(key);
+    
+    if (result.found) {
+      console.log(`Найден ${key.name} в позиции ${result.position} за ${result.attempts} попыток`);
+      return result.position;
+    } else {
+      console.log(`Не найден ${key.name} (${result.attempts} попыток)`);
+      return null;
     }
   }
 
+  // Удаление ключа
+  remove(key: Key): boolean {
+    const result = this.findPosition(key);
+    
+    if (!result.found || result.position === -1) {
+      console.log(`Не удалось удалить ${key.name}: не найден`);
+      return false;
+    }
+    
+    // Помечаем как удаленный
+    this.nodes[result.position].status = Status.REMOVED;
+    this.occupiedCount--;
+    this.removedCount++;
+    
+    console.log(`Удален ${key.name} из позиции ${result.position}`);
+    
+    // Проверяем, нужно ли уменьшить размер
+    if (this.needsShrinking()) {
+      this.shrink();
+    }
+    
+    return true;
+  }
+
+  // Очистка всех REMOVED записей
+  cleanup(): void {
+    console.log(`Начинаем очистку: ${this.removedCount} REMOVED записей`);
+    
+    if (this.removedCount === 0) {
+      console.log("Нечего очищать");
+      return;
+    }
+    
+    // Пересоздаем таблицу оптимального размера
+    const optimalSize = Math.max(this.occupiedCount * 2, 3);
+    this.resize(optimalSize);
+    
+    console.log("Очистка завершена");
+  }
+
+  // Отладочная печать
   print(): number {
+    console.log(`\n=== Хеш-таблица (размер: ${this.size}, шаг: ${this.step}) ===`);
+    console.log(`Занято: ${this.occupiedCount}, Удалено: ${this.removedCount}, Свободно: ${this.size - this.occupiedCount - this.removedCount}`);
+    
     let count = 0;
     this.nodes.forEach((node, i) => {
       if (node.status === Status.OCCUPIED && node.key && node.value) {
-        console.log(`[${i}] ${node.key.name} ${node.key.birthDate}: ${node.value.classCode}`);
+        console.log(`[${i}] OCCUPIED: ${node.key.name} (${node.key.birthDate}) -> ${node.value.classCode}`);
         count++;
-      } else if (node.status === Status.REMOVED && node.key) {
-        console.log(`[${i}] XXX ${node.key.name} ${node.key.birthDate}`);
+      } else if (node.status === Status.REMOVED) {
+        console.log(`[${i}] REMOVED: ${node.key?.name || 'unknown'}`);
       } else {
-        console.log(`[${i}] `);
+        console.log(`[${i}] FREE`);
       }
     });
+    
+    console.log(`=== Итого активных записей: ${count} ===\n`);
     return count;
   }
 
+  // Глубокое клонирование
   clone(): HashTable {
     const copy = new HashTable(this.size);
-    copy.k = this.k;
-    copy.spaceLeft = this.spaceLeft;
-
-    // Создаем глубокую копию узлов
+    copy.step = this.step;
+    copy.occupiedCount = this.occupiedCount;
+    copy.removedCount = this.removedCount;
+    
+    // Копируем все узлы
     this.nodes.forEach((node, idx) => {
       if (node.key && node.value) {
-        // Создаем новые экземпляры Key и Value
         const newKey = new Key(node.key.name, node.key.birthDate);
         const newValue = new Value(node.value.classCode);
         copy.nodes[idx] = new HashNode({
@@ -175,6 +358,14 @@ export default class HashTable {
           initialHash: node.initialHash,
           secondaryHash: node.secondaryHash
         });
+      } else if (node.key) {
+        const newKey = new Key(node.key.name, node.key.birthDate);
+        copy.nodes[idx] = new HashNode({
+          key: newKey,
+          status: node.status,
+          initialHash: node.initialHash,
+          secondaryHash: node.secondaryHash
+        });
       } else {
         copy.nodes[idx] = new HashNode({
           status: node.status,
@@ -183,7 +374,7 @@ export default class HashTable {
         });
       }
     });
-
+    
     return copy;
   }
 }

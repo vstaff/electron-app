@@ -16,7 +16,8 @@ export default function MyTable({
   tableHeadCallbacks,
   tableContent,
   highlightRow,
-  removedRows
+  removedRows,
+  isRowRemoved,
 }: MyTableProps) {
   const getRowStyle = (rowIndex: number) => {
     let style: React.CSSProperties = {};
@@ -26,9 +27,12 @@ export default function MyTable({
       style.backgroundColor = "lightgray";
       style.transition = "background-color 0.5s ease";
     }
+
+    // Используем новую функцию проверки, если она есть
+    const isRemoved = isRowRemoved ? isRowRemoved(rowIndex) : removedRows?.includes(rowIndex);
     
     // Стиль для удаленной строки
-    if (removedRows?.includes(rowIndex)) {
+    if (isRemoved) {
       style.backgroundColor = "#ffebee"; // светло-красный
       style.opacity = 0.7;
       style.textDecoration = "line-through";

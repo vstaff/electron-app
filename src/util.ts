@@ -96,7 +96,8 @@ export interface MyTableProps {
   tableHead: string[];
   tableContent?: string[][];
   tableHeadCallbacks: Callback[],
-  removedRows?: number[]
+  removedRows?: number[],
+  isRowRemoved?: (rowIndex: number) => boolean;
 }
 
 export interface MyFormProps2 {
