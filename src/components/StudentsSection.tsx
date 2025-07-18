@@ -4,10 +4,11 @@ import "../styles/App.css";
 import { useState } from "react";
 import MyDND from "./MyDND";
 import MyTable from "./MyTable";
-import { FormLabel, MenuItem, Select, TextField } from "@mui/material";
+import { FormLabel, MenuItem, Select, TextField, Box } from "@mui/material";
 import HashTable from "../dsa/hash_table/HashTable";
 import Key from "../dsa/hash_table/Key";
 import Value from "../dsa/hash_table/Value";
+import HashTableSizeControl from "./HashTableSizeControl";
 import {
   makeHTRaw,
   correctDate,
@@ -16,6 +17,9 @@ import {
   validateStudentsFile,
   alert_object,
   initialAlerts,
+  MIN_HASH_TABLE_SIZE,
+  MAX_HASH_TABLE_SIZE,
+  getHashTableResizeErrorAlert,
 } from "../util";
 import MyAlert from "./MyAlert";
 import MyForm2 from "./MyForm2";
@@ -73,6 +77,44 @@ export default function StudentsSection() {
     }
 
     return false;
+  };
+
+  // Функция для изменения размера хеш-таблицы
+  const handleHashTableSizeChange = (newSize: number): boolean => {
+    const success = studentsHashTable.resizeTable(newSize);
+    
+    if (!success) {
+      // Добавляем динамический алерт с информацией о используемых ячейках
+      const usedCells = studentsHashTable.getUsedCellsCount();
+      const errorAlert = getHashTableResizeErrorAlert(usedCells);
+      setAlerts(prevAlerts => {
+        const updatedAlerts = prevAlerts.map(alert => 
+          alert.name === "hashtable_resize_error" 
+            ? { ...alert, message: errorAlert.message, open: true }
+            : alert
+        );
+        return updatedAlerts;
+      });
+      return false;
+    }
+
+    // Создаем новую хеш-таблицу с обновленным размером
+    setStudentsHashTable(prevTable => {
+      const newTable = new HashTable(newSize);
+      
+      // Копируем все активные записи из старой таблицы
+      const oldNodes = prevTable.getNodes();
+      for (const node of oldNodes) {
+        if (node.status === 1 && node.key && node.value) { // Status.OCCUPIED = 1
+          newTable.insert(node.key, node.value);
+        }
+      }
+      
+      return newTable;
+    });
+
+    console.log(`Размер хеш-таблицы изменен на ${newSize}`);
+    return true;
   };
 
   // <form>
@@ -299,6 +341,19 @@ export default function StudentsSection() {
           </div>
         </section>
 
+        {/* Секция управления размером хеш-таблицы */}
+        <section className="app-subsection" id="hashtable-size-section">
+          <h2 className="open-sans-light">Конфигурация хеш-таблицы</h2>
+          <Box sx={{ padding: 2, border: '1px solid #ddd', borderRadius: 2 }}>
+            <HashTableSizeControl
+              currentSize={studentsHashTable.getSize()}
+              usedCells={studentsHashTable.getUsedCellsCount()}
+              onSizeChange={handleHashTableSizeChange}
+              disabled={false}
+            />
+          </Box>
+        </section>
+
         <section className="app-subsection" id="table-section">
           <h2 className="open-sans-light">Хеш-таблица</h2>
           <MyTable
@@ -384,15 +439,16 @@ export default function StudentsSection() {
               <Select
                 required
                 labelId="student-class-letter-label"
-                name="student-class-letter"
                 id="student-class-letter"
-                label="Параллель"
+                name="student-class-letter"
                 defaultValue="А"
+                fullWidth
+                variant="standard"
               >
-                <MenuItem value={"А"}>А</MenuItem>
-                <MenuItem value={"Б"}>Б</MenuItem>
-                <MenuItem value={"В"}>В</MenuItem>
-                <MenuItem value={"Г"}>Г</MenuItem>
+                <MenuItem value="А">А</MenuItem>
+                <MenuItem value="Б">Б</MenuItem>
+                <MenuItem value="В">В</MenuItem>
+                <MenuItem value="Г">Г</MenuItem>
               </Select>
 
               <LocalizationProvider dateAdapter={AdapterDayjs}>

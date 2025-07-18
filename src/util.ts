@@ -46,8 +46,24 @@ export const initialAlerts: alert_object[] = [
       title: "Не получилось добавить данные в справочник",
       message: "Данная запись уже существует",
       open: false,
+    },
+    {
+      name: "hashtable_resize_error",
+      title: "Не удается изменить размер хеш-таблицы",
+      message: "Новый размер должен быть в допустимых пределах и больше или равен количеству используемых ячеек",
+      open: false,
     }
   ]
+
+// Функция для получения алерта с динамическим сообщением о размере хеш-таблицы
+export const getHashTableResizeErrorAlert = (usedCells?: number): alert_object => ({
+  name: "hashtable_resize_error",
+  title: "Не удается изменить размер хеш-таблицы", 
+  message: usedCells !== undefined 
+    ? `Новый размер должен быть от ${MIN_HASH_TABLE_SIZE} до ${MAX_HASH_TABLE_SIZE} и больше или равен количеству используемых ячеек (${usedCells})`
+    : `Новый размер должен быть от ${MIN_HASH_TABLE_SIZE} до ${MAX_HASH_TABLE_SIZE} и больше или равен количеству используемых ячеек`,
+  open: true,
+});
 
 // <validation>
 export const validateStudentsFile = (text: string): boolean => {
@@ -73,6 +89,11 @@ export const validateStudentsFile = (text: string): boolean => {
 export const correctDate = (num: string): string => {
   const parts = num.split("/");
   return `${parts[0]} ${MONTHS[Number(parts[1]) - 1]} ${parts[2]}`;
+};
+
+// Валидация размера хеш-таблицы
+export const validateHashTableSize = (size: number): boolean => {
+  return size >= MIN_HASH_TABLE_SIZE && size <= MAX_HASH_TABLE_SIZE && Number.isInteger(size);
 };
 // </validation>
 
@@ -136,7 +157,11 @@ export interface HashNodeConstructor {
 
 // other
 const BLANK_IN_TABLE = "_";
-export const INITIAL_HASH_SIZE = 1;
+export const INITIAL_HASH_SIZE = 3; // Изменяем значение по умолчанию на 3
+
+// Константы для размера хеш-таблицы
+export const MIN_HASH_TABLE_SIZE = 1;
+export const MAX_HASH_TABLE_SIZE = 1000;
 
 export const MONTHS = [
   'янв', 'фев', 'мар', 'апр', 'май', 'июн',
