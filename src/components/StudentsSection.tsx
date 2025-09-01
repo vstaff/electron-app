@@ -143,6 +143,9 @@ export default function StudentsSection() {
 
       // Клонируем текущую хеш-таблицу и пробуем вставить
       const copy = studentsHashTable.clone();
+      
+      // Найдем позицию, куда будет вставлена запись
+      const oldNodes = copy.getNodes();
       const insertResult = copy.insert(key, value);
 
       if (!insertResult) {
@@ -155,9 +158,27 @@ export default function StudentsSection() {
       console.log("Запись успешно добавлена");
       setStudentsHashTable(copy);
 
-      // Убираем ключ из списка удалённых (если был)
+      // Убираем ключ новой записи из списка удалённых (если был)
       const recordKey = createRecordKey(key.name, key.birthDate);
       setRemovedStudentKeys((prev) => prev.filter((k) => k !== recordKey));
+
+      // Проверяем, не заместили ли мы какую-то REMOVED запись
+      // Для этого сравниваем старую и новую таблицы
+      const newNodes = copy.getNodes();
+      for (let i = 0; i < Math.min(oldNodes.length, newNodes.length); i++) {
+        const oldNode = oldNodes[i];
+        const newNode = newNodes[i];
+        
+        // Если старая позиция была REMOVED, а новая стала OCCUPIED
+        if (oldNode.status === 2 && newNode.status === 1 && oldNode.key && newNode.key) { // Status.REMOVED = 2, Status.OCCUPIED = 1
+          // Проверяем, что это разные записи
+          if (oldNode.key.name !== newNode.key.name || oldNode.key.birthDate !== newNode.key.birthDate) {
+            const oldRecordKey = createRecordKey(oldNode.key.name, oldNode.key.birthDate);
+            setRemovedStudentKeys((prev) => prev.filter((k) => k !== oldRecordKey));
+            console.log(`Убрали из списка удаленных замещенную запись: ${oldRecordKey}`);
+          }
+        }
+      }
 
       // Закрываем форму только после успеха
       handleAddStudentFormClose();
@@ -361,6 +382,7 @@ export default function StudentsSection() {
             highlightRow={highlightIdx}
             isRowRemoved={isRecordRemoved} // Используем новую функцию
             tableHead={[
+              // "#",
               "Статус",
               "Первичный хеш",
               "Вторичный хеш",
