@@ -22,6 +22,7 @@ import MyForm2 from "./MyForm2";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { download, generateCsv, mkConfig } from "export-to-csv";
 
 export default function StudentsSection() {
   const [alerts, setAlerts] = useState<alert_object[]>(initialAlerts);
@@ -60,12 +61,12 @@ export default function StudentsSection() {
 
     const row = tableData[rowIndex];
     // Проверяем статус: если 2 (REMOVED) - значит удалена
-    if (row[1] === "2") return true;
+    if (row.status === 2) return true;
 
     // Если статус 1 (OCCUPIED), проверяем по ключу
-    if (row[1] === "1") {
-      const name = row[4]; // ФИО
-      const birthDate = row[6]; // Дата рождения
+    if (row.status === 1) {
+      const name = row.fullName; // ФИО
+      const birthDate = row.birthDate; // Дата рождения
       if (name !== "_" && birthDate !== "_") {
         const recordKey = createRecordKey(name, birthDate);
         return removedStudentKeys.includes(recordKey);
@@ -274,6 +275,17 @@ export default function StudentsSection() {
   }, [removedStudentKeys]);
   // </effects>
 
+  // для экспорта
+  const csvConfig = mkConfig({
+    fieldSeparator: ',',
+    decimalSeparator: '.',
+    useKeysAsHeaders: true,
+  });
+  const handleExportData = () => {
+    const csv = generateCsv(csvConfig)(makeHTRaw(studentsHashTable));
+    download(csvConfig)(csv);
+  };
+
   return (
     <>
       <div className="open-sans-regular app-section" id="students-section">
@@ -329,7 +341,7 @@ export default function StudentsSection() {
               },
               {
                 name: "Экспортировать",
-                callback: () => console.log("экспорт студентов"),
+                callback: () => handleExportData(),
               },
               {
                 name: "Импортировать",

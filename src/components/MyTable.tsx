@@ -74,9 +74,9 @@ export default function MyTable({
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                   style={getRowStyle(cidx)}
                 >
-                  {content.map((item, idx) => (
-                    <TableCell key={idx} align="left">
-                      {item}
+                  {Object.entries(content).map(([key, value]) => (
+                    <TableCell key={key} align="left">
+                      {value}
                     </TableCell>
                   ))}
                 </TableRow>

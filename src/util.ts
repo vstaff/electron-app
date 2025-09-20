@@ -17,37 +17,37 @@ export interface alert_object {
 }
 
 export const initialAlerts: alert_object[] = [
-    {
-      name: "read_file_error",
-      title: "Не получилось загрузить данные из файла",
-      message: "Проверьте корректность данных в файле",
-      open: false,
-    },
-    {
-      name: "insert_error",
-      title: "Не получилось добавить данные в справочник",
-      message: "Проверьте корректность вводимых данных",
-      open: false,
-    },
-    {
-      name: "search_error",
-      title: "Запись не найдена",
-      message: "Указанной записи не существует в указанном справочнике",
-      open: false,
-    },
-    {
-      name: "delete_error",
-      title: "Не получилось удалить запись",
-      message: "Указанной записи не существует в указанном справочнике",
-      open: false,
-    },
-    {
-      name: "duplicate_error",
-      title: "Не получилось добавить данные в справочник",
-      message: "Данная запись уже существует",
-      open: false,
-    }
-  ]
+  {
+    name: "read_file_error",
+    title: "Не получилось загрузить данные из файла",
+    message: "Проверьте корректность данных в файле",
+    open: false,
+  },
+  {
+    name: "insert_error",
+    title: "Не получилось добавить данные в справочник",
+    message: "Проверьте корректность вводимых данных",
+    open: false,
+  },
+  {
+    name: "search_error",
+    title: "Запись не найдена",
+    message: "Указанной записи не существует в указанном справочнике",
+    open: false,
+  },
+  {
+    name: "delete_error",
+    title: "Не получилось удалить запись",
+    message: "Указанной записи не существует в указанном справочнике",
+    open: false,
+  },
+  {
+    name: "duplicate_error",
+    title: "Не получилось добавить данные в справочник",
+    message: "Данная запись уже существует",
+    open: false,
+  }
+]
 
 // <validation>
 export const validateStudentsFile = (text: string): boolean => {
@@ -94,7 +94,7 @@ export interface MyTableProps {
   highlightRow?: number | null;
   tableFor: "students" | "grades",
   tableHead: string[];
-  tableContent?: string[][];
+  tableContent: Student[];
   tableHeadCallbacks: Callback[],
   removedRows?: number[],
   isRowRemoved?: (rowIndex: number) => boolean;
@@ -157,18 +157,28 @@ export interface StudentFormDataJSON {
   "student-name": string;
 }
 
+export type Student = {
+  index: number;
+  status: 0 | 1 | 2;
+  initialHash: number;
+  secondaryHash: number;
+  fullName: string;
+  class_: string;
+  birthDate: string;
+}
+
 // преобразовать хеш-таблицу для отображения в обычной таблице 
-export const makeHTRaw = (hashTable: HashTable): string[][] => {
-  const result: string[][] = [];
+export const makeHTRaw = (hashTable: HashTable): Student[] => {
+  const result: Student[] = [];
 
   hashTable.getNodes().forEach((node, idx) => {
     if (node !== undefined && node.key !== undefined && node.value !== undefined && node.status !== undefined && node.initialHash !== undefined && node.secondaryHash !== undefined) {
       result.push(
-        [idx.toString(), node.status.toString(), node.initialHash.toString(), node.secondaryHash.toString(), node.key.name, node.value.classCode, node.key.birthDate]
+        { index: idx, status: node.status, initialHash: node.initialHash, secondaryHash: node.secondaryHash, fullName: node.key.name, class_: node.value.classCode, birthDate: node.key.birthDate }
       )
     } else {
       result.push(
-        [idx.toString(), "0", ...Array(5).fill(BLANK_IN_TABLE)]
+        { index: idx, status: 0, initialHash: 0, secondaryHash: 0, fullName: BLANK_IN_TABLE, class_: BLANK_IN_TABLE, birthDate: BLANK_IN_TABLE }
       )
     }
   });
